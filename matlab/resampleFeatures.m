@@ -1,8 +1,14 @@
-function [stim] = resampleFeatures(filename)
+function [stim] = resampleFeatures(filenames)
 
-fileData = load(filename);
-stim = fileData.stim
-stimData = stim.data;
+[~,c] = size(filenames);
+if (c > 1)
+    stim = combineStimFiles(filenames);
+    stimData = stim.data;
+else
+    fileData = load(filenames);
+    stim = fileData.stim;
+    stimData = stim.data;
+end
 
 for i = 3:size(stimData,1)
     for j = 1:size(stimData,2)
