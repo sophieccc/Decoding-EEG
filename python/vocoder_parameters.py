@@ -44,7 +44,7 @@ def format_features(f0, spectrogram, aperiodicity, vuv):
     data[3] = features[3]
     return data
 
-def save_audio_features(directory_path, compressed_data):
+def analyse_all_audios(directory_path, compressed_data):
     directory = os.fsencode(directory_path)
     data = []
 
@@ -70,7 +70,7 @@ def synthesise_audio(mat, fs, compressed_data):
     audio = pw.synthesize(f0, spectrogram, aperiodicity, fs)
     return audio
 
-def synthesise_audios(directory_path, compressed_data, fs):
+def synthesise_all_audios(directory_path, compressed_data, fs):
     directory = os.fsencode(directory_path)
     mat = sio.loadmat(directory_path + '.mat')
     data = mat['eeg']['data'][0,0]
@@ -88,9 +88,9 @@ def main():
         if len(args) > 1:
             compressed_data = int(args[1])
 
-    save_audio_features(path, compressed_data)
+    analyse_all_audios(path, compressed_data)
 
-    synthesise_audios(path, compressed_data, input_fs)
+    synthesise_all_audios(path, compressed_data, input_fs)
 
 if __name__ == '__main__':
     main()
