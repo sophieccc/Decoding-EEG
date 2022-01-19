@@ -1,23 +1,28 @@
+import os
+import sys
 import numpy as np
 import pyworld as pw
 import scipy.io as sio
 import soundfile as sf
-import sys, getopt
+
+# The fs for all of our audio inputs is 44100.
+input_fs = 44100
+
+# The fs of the values returned by WORLD is always 200.
+world_fs = 200
 
 def analyse_audio(filename, compressed_data):
     # Getting audio data and sampling rate.
-    x, fs = sf.read(filename)
-    print('Audio sampling rate:',fs)
-    print('Audio shape:',x.shape)
+    audio, fs = sf.read(filename)
 
     # Using stereo data so just use one side/column.
-    x_left = x[:, 0]
+    audio_left = audio[:, 0]
 
     # Using a python wrapper for pyworld so array needs to be C-compatible.
-    x_left = x_left.copy(order='C')
+    audio_left = audio_left.copy(order='C')
 
     # Getting vocoder parameters.
-    f0, spectrogram, aperiodicity = pw.wav2world(x_left, fs)
+    f0, spectrogram, aperiodicity = pw.wav2world(audio_left, fs)
     vuv = (aperiodicity[:, 0] < 0.5).astype(np.float32)[:, None]
     f0 = np.transpose([f0])
 
@@ -28,13 +33,34 @@ def analyse_audio(filename, compressed_data):
         spectrogram[spectrogram > 1] = 1
         np.power(spectrogram, .1)
 
-    return fs, f0, vuv, aperiodicity, spectrogram
+    return f0, spectrogram, aperiodicity, vuv
 
-def synthesise_audio(filename, fs, compressed_data):
-    mat = sio.loadmat(filename)
-    f0 = mat['eeg']['data'][0, 0]['f0'][0, 0][:,0].copy(order='C')
-    aperiodicity = mat['eeg']['data'][0, 0]['aperiodicity'][0, 0].copy(order='C')
-    spectrogram = mat['eeg']['data'][0, 0]['spectrogram'][0, 0].copy(order='C')
+def format_features(f0, spectrogram, aperiodicity, vuv):
+    features = [np.array(f0), np.array(spectrogram), np.array(aperiodicity), np.array(vuv)]
+    data = np.zeros((4,), dtype=object)
+    data[0] = features[0]
+    data[1] = features[1]
+    data[2] = features[2]
+    data[3] = features[3]
+    return data
+
+def save_audio_features(directory_path, compressed_data):
+    directory = os.fsencode(directory_path)
+    data = []
+
+    for index in range(0, len(os.listdir(directory))):
+        file_path = os.path.join(directory, os.listdir(directory)[index])
+        f0, spectrogram, aperiodicity, vuv = analyse_audio(file_path, compressed_data)
+        features = format_features(f0, spectrogram, aperiodicity, vuv)
+        data.append(features)
+
+    info = {"fs": world_fs, "data": np.transpose(data)}
+    sio.savemat(directory_path + '.mat', mdict={'eeg': info})
+
+def synthesise_audio(mat, fs, compressed_data):
+    f0 = mat[0][:, 0].copy(order='C')
+    spectrogram = mat[1].copy(order='C')
+    aperiodicity = mat[2].copy(order='C')
 
     if compressed_data:
         f0 = 10 ** f0
@@ -44,30 +70,27 @@ def synthesise_audio(filename, fs, compressed_data):
     audio = pw.synthesize(f0, spectrogram, aperiodicity, fs)
     return audio
 
+def synthesise_audios(directory_path, compressed_data, fs):
+    directory = os.fsencode(directory_path)
+    mat = sio.loadmat(directory_path + '.mat')
+    data = mat['eeg']['data'][0,0]
+
+    for index in range(0, len(os.listdir(directory))):
+        audio = synthesise_audio(data[:,index], fs, compressed_data)
+        sf.write('synthesised_' + str(index) + '.wav', audio, fs)
+
 def main():
     compressed_data = 0
-    filename = ''
-
+    path = ''
     args = sys.argv[1:]
     if len(args) > 0:
-        filename = args[0]
+        path = args[0]
         if len(args) > 1:
             compressed_data = int(args[1])
 
-    fs, f0, vuv, aperiodicity, spectrogram = analyse_audio(filename, compressed_data)
-    print('Output shape (f0):', f0.shape)
-    print('Output shape (aperiodicity):', aperiodicity.shape)
-    print('Output shape (spectrogram):', spectrogram.shape)
-    print('Output shape (vuv):', vuv.shape)
+    save_audio_features(path, compressed_data)
 
-    # Convert to CND/Matlab format
-    features = {"f0": f0, "vuv": vuv, "spectrogram": spectrogram, "aperiodicity": aperiodicity}
-    info = {"fs": 200, "data": features}
-    sio.savemat('out.mat', mdict={'eeg': info})
-
-    audio = synthesise_audio('out.mat', fs, compressed_data)
-    print('Output shape (audio):', audio.shape)
-    sf.write('synthesised_audio.wav', audio, fs)
+    synthesise_audios(path, compressed_data, input_fs)
 
 if __name__ == '__main__':
     main()
