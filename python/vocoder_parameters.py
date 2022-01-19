@@ -38,10 +38,10 @@ def analyse_audio(filename, compressed_data):
 def format_features(f0, spectrogram, aperiodicity, vuv):
     features = [np.array(f0), np.array(spectrogram), np.array(aperiodicity), np.array(vuv)]
     data = np.zeros((4,), dtype=object)
-    data[0] = features[0]
-    data[1] = features[1]
-    data[2] = features[2]
-    data[3] = features[3]
+    data[0] = features[0].astype('double')
+    data[1] = features[1].astype('double')
+    data[2] = features[2].astype('double')
+    data[3] = features[3].astype('double')
     return data
 
 def analyse_all_audios(directory_path, compressed_data):
