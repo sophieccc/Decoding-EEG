@@ -2,6 +2,7 @@ import numpy as np
 import pyworld as pw
 import scipy.io as sio
 import soundfile as sf
+import sys, getopt
 
 def analyse_audio(filename, compressed_data):
     # Getting audio data and sampling rate.
@@ -45,7 +46,15 @@ def synthesise_audio(filename, fs, compressed_data):
 
 def main():
     compressed_data = 0
-    fs, f0, vuv, aperiodicity, spectrogram = analyse_audio('audio5.wav', compressed_data)
+    filename = ''
+
+    args = sys.argv[1:]
+    if len(args) > 0:
+        filename = args[0]
+        if len(args) > 1:
+            compressed_data = int(args[1])
+
+    fs, f0, vuv, aperiodicity, spectrogram = analyse_audio(filename, compressed_data)
     print('Output shape (f0):', f0.shape)
     print('Output shape (aperiodicity):', aperiodicity.shape)
     print('Output shape (spectrogram):', spectrogram.shape)
@@ -58,7 +67,7 @@ def main():
 
     audio = synthesise_audio('out.mat', fs, compressed_data)
     print('Output shape (audio):', audio.shape)
-    sf.write('synthesised_audio_decompress.wav', audio, fs)
+    sf.write('synthesised_audio.wav', audio, fs)
 
 if __name__ == '__main__':
     main()
