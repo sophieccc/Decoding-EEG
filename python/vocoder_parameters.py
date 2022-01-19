@@ -47,20 +47,30 @@ def format_features(f0, spectrogram, aperiodicity, vuv):
 def analyse_all_audios(directory_path, compressed_data):
     directory = os.fsencode(directory_path)
     data = []
+    num_files = len(os.listdir(directory))
 
-    for index in range(0, len(os.listdir(directory))):
+    for index in range(0, num_files):
         file_path = os.path.join(directory, os.listdir(directory)[index])
         f0, spectrogram, aperiodicity, vuv = analyse_audio(file_path, compressed_data)
         features = format_features(f0, spectrogram, aperiodicity, vuv)
         data.append(features)
 
-    info = {"fs": world_fs, "data": np.transpose(data)}
-    sio.savemat(directory_path + '.mat', mdict={'eeg': info})
+    data_stim = sio.loadmat('data/dataStim.mat')
+    stim_idx = data_stim['stim']['stimIdxs'][0][0].astype('double')
+    cond_idx = data_stim['stim']['condIdxs'][0][0].astype('double')
+    cond_names = data_stim['stim']['condNames'][0][0]
+    stim_fs = data_stim['stim']['fs'][0][0]
+    info = {"stimIdxs": stim_idx, "condIdxs": cond_idx, "condNames": cond_names, "fs": stim_fs}
+    info["world_fs"] = world_fs
+    info["data"] = np.concatenate((data_stim['stim']['data'][0][0][:, 0:num_files], np.transpose(data)))
+    names = np.append(data_stim['stim']['names'][0][0][0], ["f0", "spectrogram", "aperiodicity", "vuv"])
+    info["names"] = [names]
+    sio.savemat("data/" + directory_path + '.mat', mdict={'stim': info})
 
 def synthesise_audio(mat, fs, compressed_data):
-    f0 = mat[0][:, 0].copy(order='C')
-    spectrogram = mat[1].copy(order='C')
-    aperiodicity = mat[2].copy(order='C')
+    f0 = mat[2][:, 0].copy(order='C')
+    spectrogram = mat[3].copy(order='C')
+    aperiodicity = mat[4].copy(order='C')
 
     if compressed_data:
         f0 = 10 ** f0
@@ -72,8 +82,8 @@ def synthesise_audio(mat, fs, compressed_data):
 
 def synthesise_all_audios(directory_path, compressed_data, fs):
     directory = os.fsencode(directory_path)
-    mat = sio.loadmat(directory_path + '.mat')
-    data = mat['eeg']['data'][0,0]
+    mat = sio.loadmat("data/" + directory_path + '.mat')
+    data = mat['stim']['data'][0,0]
 
     for index in range(0, len(os.listdir(directory))):
         audio = synthesise_audio(data[:,index], fs, compressed_data)

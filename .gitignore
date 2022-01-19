@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 .DS_Store
 *.wav
+python/data/dataStim.mat
+python/data/audio_files.mat
