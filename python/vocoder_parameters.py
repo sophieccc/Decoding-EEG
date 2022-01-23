@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import numpy as np
 import pyworld as pw
@@ -44,13 +45,27 @@ def format_features(f0, spectrogram, aperiodicity, vuv):
     data[3] = features[3].astype('double')
     return data
 
+def order_files(directory):
+    files = os.listdir(directory)
+    file_nums = []
+    filepaths = [os.path.join(directory, file) for file in files]
+    for file in files:
+        file = file.decode("utf-8") 
+        file = int(re.sub("[^0-9]", "", file))
+        file_nums.append(file)
+    file_dict = {file_nums[i]: filepaths[i] for i in range(len(file_nums))}
+    sorted_dict = sorted(file_dict.items())
+    sorted_paths = [pair[1] for pair in sorted_dict]
+    return sorted_paths
+
 def analyse_all_audios(directory_path, compressed_data):
     directory = os.fsencode(directory_path)
     data = []
     num_files = len(os.listdir(directory))
+    sorted_paths = order_files(directory)
 
     for index in range(0, num_files):
-        file_path = os.path.join(directory, os.listdir(directory)[index])
+        file_path = sorted_paths[index]
         f0, spectrogram, aperiodicity, vuv = analyse_audio(file_path, compressed_data)
         features = format_features(f0, spectrogram, aperiodicity, vuv)
         data.append(features)
@@ -88,7 +103,7 @@ def synthesise_all_audios(directory_path, compressed_data, fs):
     for index in range(0, len(os.listdir(directory))):
         audio = synthesise_audio(data[:,index], fs, compressed_data)
         sf.write('synthesised_' + str(index) + '.wav', audio, fs)
-
+    
 def main():
     compressed_data = 0
     path = ''
@@ -99,7 +114,6 @@ def main():
             compressed_data = int(args[1])
 
     analyse_all_audios(path, compressed_data)
-
     synthesise_all_audios(path, compressed_data, input_fs)
 
 if __name__ == '__main__':

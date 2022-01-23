@@ -131,3 +131,4 @@ dmypy.json
 *.wav
 python/data/dataStim.mat
 python/data/audio_files.mat
+python/matlab/*
