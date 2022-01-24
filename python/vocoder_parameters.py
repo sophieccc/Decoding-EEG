@@ -109,8 +109,10 @@ def analyse_all_audios(directory_path, compressed_data):
 
 def synthesise_audio(mat, fs, compressed_data):
     f0 = mat[2][:, 0].copy(order='C')
-    spectrogram = mat[3].copy(order='C')
-    aperiodicity = mat[4].copy(order='C')
+    spectrogram = util.restore_original_filters(mat[3], 1025, INPUT_FS)
+    aperiodicity = util.restore_original_filters(mat[4], 1025, INPUT_FS)
+    spectrogram = spectrogram.copy(order='C')
+    aperiodicity = aperiodicity.copy(order='C')
 
     if compressed_data:
         f0 = 10**f0

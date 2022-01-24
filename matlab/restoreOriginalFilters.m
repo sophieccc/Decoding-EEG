@@ -13,7 +13,6 @@ end
 [~, numObs] = size(stimData);
 feature = stimData{featureIdx,1};
 [numSamples, origFilters] = size(feature);
-newMat = zeros(numSamples,numFilters);
 maxFreq = floor(fs / 2);
 stepSize = maxFreq / numFilters;
 [lower,~,upper]= greenwud(origFilters, 1, maxFreq, 0);
@@ -21,6 +20,7 @@ stepSize = maxFreq / numFilters;
 for obs = 1:numObs
     obsData = stimData{featureIdx,obs};
     [numSamples, origFilters] = size(obsData);
+    newMat = zeros(numSamples,numFilters);
     for i = 1:numSamples
         sampleData = obsData(i,:);
         for j = 1:origFilters

@@ -55,3 +55,27 @@ def reduce_filter_num(info, num_filters, feature_idx, fs):
         data[feature_idx, obs] = obs_data
 
     return data
+
+def restore_original_filters(feature, orig_filters, fs):
+    num_samples, num_filters = feature.shape
+    if num_filters == orig_filters:
+        return feature
+    max_freq = floor(fs / 2)
+    step_size = max_freq / orig_filters
+    lower, upper = greenwood(num_filters, 1, max_freq)
+
+    new_mat = zeros((num_samples, orig_filters))
+    for i in range(0, num_samples):
+        sample_data = feature[i, :]
+        for j in range(0, num_filters):
+            bottom_filt = floor(lower[j] / step_size)
+            top_filt = floor(upper[j] / step_size)
+            if top_filt > orig_filters:
+                top_filt = orig_filters
+            val = sample_data[j]
+            for x in range(bottom_filt, top_filt):
+                new_mat[i, x] = val
+    feature = new_mat
+
+    return feature
+
