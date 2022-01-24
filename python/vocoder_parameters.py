@@ -6,11 +6,14 @@ import pyworld as pw
 import scipy.io as sio
 import soundfile as sf
 
+import feature_utility as util
+
 # The fs for all of our audio inputs is 44100.
-input_fs = 44100
+INPUT_FS = 44100
 
 # The fs of the values returned by WORLD is always 200.
-world_fs = 200
+WORLD_FS = 200
+
 
 def analyse_audio(filename, compressed_data):
     # Getting audio data and sampling rate.
@@ -29,34 +32,43 @@ def analyse_audio(filename, compressed_data):
 
     # Compressing parameters.
     if compressed_data:
-        f0 = np.log10(f0+1)
-        aperiodicity = np.log10(-np.transpose(np.transpose(aperiodicity))+1)
+        f0 = np.log10(f0 + 1)
+        aperiodicity = np.log10(-np.transpose(np.transpose(aperiodicity)) + 1)
         spectrogram[spectrogram > 1] = 1
         np.power(spectrogram, .1)
 
     return f0, spectrogram, aperiodicity, vuv
 
+
 def format_features(f0, spectrogram, aperiodicity, vuv):
-    features = [np.array(f0), np.array(spectrogram), np.array(aperiodicity), np.array(vuv)]
-    data = np.zeros((4,), dtype=object)
+    features = [
+        np.array(f0),
+        np.array(spectrogram),
+        np.array(aperiodicity),
+        np.array(vuv)
+    ]
+    data = np.zeros((4, ), dtype=object)
     data[0] = features[0].astype('double')
     data[1] = features[1].astype('double')
     data[2] = features[2].astype('double')
     data[3] = features[3].astype('double')
     return data
 
+
 def order_files(directory):
     files = os.listdir(directory)
     file_nums = []
-    filepaths = [os.path.join(directory, file) for file in files]
-    for file in files:
-        file = file.decode("utf-8") 
-        file = int(re.sub("[^0-9]", "", file))
-        file_nums.append(file)
+    filepaths = []
+    for audio_file in files:
+        filepaths.append(os.path.join(directory, audio_file))
+        audio_file = audio_file.decode("utf-8")
+        audio_file = int(re.sub("[^0-9]", "", audio_file))
+        file_nums.append(audio_file)
     file_dict = {file_nums[i]: filepaths[i] for i in range(len(file_nums))}
     sorted_dict = sorted(file_dict.items())
     sorted_paths = [pair[1] for pair in sorted_dict]
     return sorted_paths
+
 
 def analyse_all_audios(directory_path, compressed_data):
     directory = os.fsencode(directory_path)
@@ -65,8 +77,10 @@ def analyse_all_audios(directory_path, compressed_data):
     sorted_paths = order_files(directory)
 
     for index in range(0, num_files):
+        print("Analyzing audio ", str(index))
         file_path = sorted_paths[index]
-        f0, spectrogram, aperiodicity, vuv = analyse_audio(file_path, compressed_data)
+        f0, spectrogram, aperiodicity, vuv = analyse_audio(
+            file_path, compressed_data)
         features = format_features(f0, spectrogram, aperiodicity, vuv)
         data.append(features)
 
@@ -75,12 +89,23 @@ def analyse_all_audios(directory_path, compressed_data):
     cond_idx = data_stim['stim']['condIdxs'][0][0].astype('double')
     cond_names = data_stim['stim']['condNames'][0][0]
     stim_fs = data_stim['stim']['fs'][0][0]
-    info = {"stimIdxs": stim_idx, "condIdxs": cond_idx, "condNames": cond_names, "fs": stim_fs}
-    info["world_fs"] = world_fs
-    info["data"] = np.concatenate((data_stim['stim']['data'][0][0][:, 0:num_files], np.transpose(data)))
-    names = np.append(data_stim['stim']['names'][0][0][0], ["f0", "spectrogram", "aperiodicity", "vuv"])
+    info = {
+        "stimIdxs": stim_idx,
+        "condIdxs": cond_idx,
+        "condNames": cond_names,
+        "fs": stim_fs
+    }
+    info["world_fs"] = WORLD_FS
+    info["data"] = np.concatenate(
+        (data_stim['stim']['data'][0][0][:, 0:num_files], np.transpose(data)))
+    names = np.append(data_stim['stim']['names'][0][0][0],
+                      ["f0", "spectrogram", "aperiodicity", "vuv"])
     info["names"] = [names]
+
+    info["data"] = util.reduce_filter_num(info, 16, 3, INPUT_FS)
+    info["data"] = util.reduce_filter_num(info, 16, 4, INPUT_FS)
     sio.savemat("data/" + directory_path + '.mat', mdict={'stim': info})
+
 
 def synthesise_audio(mat, fs, compressed_data):
     f0 = mat[2][:, 0].copy(order='C')
@@ -88,22 +113,24 @@ def synthesise_audio(mat, fs, compressed_data):
     aperiodicity = mat[4].copy(order='C')
 
     if compressed_data:
-        f0 = 10 ** f0
-        aperiodicity = 10 ** aperiodicity
+        f0 = 10**f0
+        aperiodicity = 10**aperiodicity
         np.power(spectrogram, 10)
 
     audio = pw.synthesize(f0, spectrogram, aperiodicity, fs)
     return audio
 
+
 def synthesise_all_audios(directory_path, compressed_data, fs):
     directory = os.fsencode(directory_path)
     mat = sio.loadmat("data/" + directory_path + '.mat')
-    data = mat['stim']['data'][0,0]
+    data = mat['stim']['data'][0, 0]
 
     for index in range(0, len(os.listdir(directory))):
-        audio = synthesise_audio(data[:,index], fs, compressed_data)
+        audio = synthesise_audio(data[:, index], fs, compressed_data)
         sf.write('synthesised_' + str(index) + '.wav', audio, fs)
-    
+
+
 def main():
     compressed_data = 0
     path = ''
@@ -114,7 +141,8 @@ def main():
             compressed_data = int(args[1])
 
     analyse_all_audios(path, compressed_data)
-    synthesise_all_audios(path, compressed_data, input_fs)
+    #synthesise_all_audios(path, compressed_data, INPUT_FS)
+
 
 if __name__ == '__main__':
     main()
