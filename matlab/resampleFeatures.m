@@ -1,4 +1,4 @@
-function [stim] = resampleFeatures(filenames)
+function resampleFeatures(filenames)
 
 [~,c] = size(filenames);
 if (c > 1)
@@ -19,3 +19,4 @@ for i = 3:size(stimData,1)
 end
 
 stim.data = stimData;
+save("dataStim.mat","stim");
