@@ -102,8 +102,8 @@ def analyse_all_audios(directory_path, compressed_data):
                       ["f0", "spectrogram", "aperiodicity", "vuv"])
     info["names"] = [names]
 
-    info["data"] = util.reduce_filter_num(info, 16, 3, INPUT_FS)
-    info["data"] = util.reduce_filter_num(info, 16, 4, INPUT_FS)
+    info["data"] = util.reduce_filter_num(info, 32, 3, INPUT_FS)
+    info["data"] = util.reduce_filter_num(info, 32, 4, INPUT_FS)
     sio.savemat("data/" + directory_path + '.mat', mdict={'stim': info})
 
 
@@ -123,27 +123,26 @@ def synthesise_audio(mat, fs, compressed_data):
     return audio
 
 
-def synthesise_all_audios(directory_path, compressed_data, fs):
-    directory = os.fsencode(directory_path)
-    mat = sio.loadmat("data/" + directory_path + '.mat')
+def synthesise_all_audios(filepath, compressed_data, fs):
+    mat = sio.loadmat("data/" + filepath + '.mat')
     data = mat['stim']['data'][0, 0]
 
-    for index in range(0, len(os.listdir(directory))):
+    for index in range(0, 3):
         audio = synthesise_audio(data[:, index], fs, compressed_data)
-        sf.write('synthesised_' + str(index) + '.wav', audio, fs)
+        sf.write('notavg_synthesised_' + str(index) + '.wav', audio, fs)
 
 
 def main():
     compressed_data = 0
-    path = ''
+    path = 'newStim'
     args = sys.argv[1:]
     if len(args) > 0:
         path = args[0]
         if len(args) > 1:
             compressed_data = int(args[1])
 
-    analyse_all_audios(path, compressed_data)
-    #synthesise_all_audios(path, compressed_data, INPUT_FS)
+    #analyse_all_audios(path, compressed_data)
+    synthesise_all_audios(path, compressed_data, INPUT_FS)
 
 
 if __name__ == '__main__':

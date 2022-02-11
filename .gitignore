@@ -132,3 +132,6 @@ dmypy.json
 python/data/dataStim.mat
 python/data/audio_files.mat
 python/matlab/*
+python/data/newStim.mat
+python/data/newStim32Avg.mat
+python/data/newStim64.mat
