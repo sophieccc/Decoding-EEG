@@ -16,7 +16,7 @@ bandpassFilterRange = [1,8]; % Hz (indicate 0 to avoid running the low-pass
                           % e.g., [0,8] will apply only a low-pass filter
                           % at 8 Hz
 % changed by sophie
-downFs = 32; % Hz. *** fs/downFs must be an integer value ***
+downFs = 64; % Hz. *** fs/downFs must be an integer value ***
 
 stimIdx = 4; % 1: env; 2: word onset; 3: f0; 4: sp; 5: ap; 6: vuv;
 
@@ -83,5 +83,5 @@ if isfield(eeg,'paddingStartSample')
 end
 
 % Saving preprocessed data
-eegPreFilename = 'pre_subData.mat';
+eegPreFilename = 'pre_subData64.mat';
 save(eegPreFilename,'eeg')

@@ -30,7 +30,7 @@ bandpassFilterRange = [1,8]; % Hz (indicate 0 to avoid running the low-pass
                           % e.g., [0,8] will apply only a low-pass filter
                           % at 8 Hz
 % changed by sophie
-downFs = 32; % Hz. *** fs/downFs must be an integer value ***
+downFs = 64; % Hz. *** fs/downFs must be an integer value ***
 
 eegFilenames = dir([dataMainFolder,dataCNDSubfolder,'dataSub*.mat']);
 nSubs = length(eegFilenames);
@@ -121,8 +121,8 @@ dirTRF = -1; % Backward TRF model
 stimIdx = 3;
 
 % Loading Stim data
-stimFilename = 'dataStim_32.mat';
-disp(['Loading stimulus data: ','dataStim_32.mat'])
+stimFilename = 'dataStim_64.mat';
+disp(['Loading stimulus data: ','dataStim_64.mat'])
 load(stimFilename,'stim')
 
 % Get models for: 1 feature, [subIdx] subjects, all observations.
@@ -139,7 +139,7 @@ end
 % Loading Stim data
 
 stimIdx = 5;
-fileEnd = "_model_32_feature" + stimIdx + ".mat";
+fileEnd = "_model_64_feature" + stimIdx + ".mat";
 modelFilenames = ["sub1" + fileEnd, "sub2" + fileEnd, "sub3" + fileEnd, "sub4" + fileEnd, "sub5" + fileEnd];
 avgStruct = struct([]);
 for i = 1:20
@@ -156,7 +156,7 @@ for i = 1:20
         bVals = cat(3, bVals, currModel.b);
         tVals = cat(4,tVals,currModel.t);
     end
-    averageModel = struct('w', mean(wVals,4), 'b', mean(bVals,3), 't', mean(tVals,4), 'fs', 32, 'Dir', -1, 'type', 'multi');
+    averageModel = struct('w', mean(wVals,4), 'b', mean(bVals,3), 't', mean(tVals,4), 'fs', 64, 'Dir', -1, 'type', 'multi');
     avgStruct = [avgStruct, averageModel];
 end
 
@@ -169,8 +169,8 @@ dirTRF = -1; % Backward TRF model
 stimIdx = 5;
 
 % Loading Stim data
-stimFilename = 'dataStim_32.mat';
-disp(['Loading stimulus data: ','dataStim_32.mat'])
+stimFilename = 'dataStim_64.mat';
+disp(['Loading stimulus data: ','dataStim_64.mat'])
 load(stimFilename,'stim')
 
 eegPreFilename = [dataMainFolder,dataCNDSubfolder,'pre_',eegFilenames(1).name];
@@ -187,11 +187,11 @@ stimIdx = 5;
 subIdx = 0;
 
 % Loading Stim data
-stimFilename = 'dataStim_32.mat';
-disp(['Loading stimulus data: ','dataStim_32.mat'])
+stimFilename = 'dataStim_64.mat';
+disp(['Loading stimulus data: ','dataStim_64.mat'])
 load(stimFilename,'stim')
 
-eegPreFilename = 'mcca/pre_subData.mat';
+eegPreFilename = 'mcca/pre_subData64.mat';
 disp('Loading preprocessed EEG data')
 
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
@@ -261,7 +261,7 @@ function modelAll = saveModel(stimFeature,eeg, dirTRF, stimIdx, subIdx)
         model = mTRFtrain(trainStim,trainResp,eeg.fs,dirTRF,tmin,tmax,lambdas(bestLambda),'verbose',0);
         modelAll(obsIdx) = model;
     end
-    name = "sub" + subIdx + "_model_32_feature" + stimIdx + ".mat";
+    name = "sub" + subIdx + "_model_64_feature" + stimIdx + ".mat";
     save(name,"modelAll");
 end
 
@@ -283,9 +283,9 @@ function savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix)
         predAll{obsIdx} = pred;
     end
 
-    name = prefix + "sub" + subIdx + "_pred_32_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_pred_64_feature" + stimIdx + ".mat";
     save(name,"predAll");
-    name = prefix + "sub" + subIdx + "_rvals_32_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_rvals_64_feature" + stimIdx + ".mat";
     save(name,"rVals");
 end
 
