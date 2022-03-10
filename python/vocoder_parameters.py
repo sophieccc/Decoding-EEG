@@ -129,12 +129,12 @@ def synthesise_all_audios(filepath, compressed_data, fs):
 
     for index in range(0, 3):
         audio = synthesise_audio(data[:, index], fs, compressed_data)
-        sf.write('avg_synthesised_' + str(index) + '.wav', audio, fs)
+        sf.write('mcca_synthesised_' + str(index) + '.wav', audio, fs)
 
 
 def main():
     compressed_data = 0
-    path = 'newStim32Avg'
+    path = 'newStim32MCCA'
     args = sys.argv[1:]
     if len(args) > 0:
         path = args[0]

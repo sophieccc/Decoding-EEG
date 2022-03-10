@@ -35,7 +35,7 @@ downFs = 32; % Hz. *** fs/downFs must be an integer value ***
 eegFilenames = dir([dataMainFolder,dataCNDSubfolder,'dataSub*.mat']);
 nSubs = length(eegFilenames);
 
-stimIdx = 4; % 1: env; 2: word onset; 3: f0; 4: sp; 5: ap; 6: vuv;
+stimIdx = 3; % 1: env; 2: word onset; 3: f0; 4: sp; 5: ap; 6: vuv;
 
 %% Preprocess EEG - Natural speech listening experiment
 for sub = 1:nSubs
@@ -178,6 +178,25 @@ disp(['Loading preprocessed EEG data: pre_',eegFilenames(1).name])
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
 savePred(stimFeature, eeg, modelAll, stimIdx, 1, "avg_");
 
+%%
+%% MCCA
+
+clear modelAll
+dirTRF = -1; % Backward TRF model
+stimIdx = 5;
+subIdx = 0;
+
+% Loading Stim data
+stimFilename = 'dataStim_32.mat';
+disp(['Loading stimulus data: ','dataStim_32.mat'])
+load(stimFilename,'stim')
+
+eegPreFilename = 'mcca/pre_subData.mat';
+disp('Loading preprocessed EEG data')
+
+[stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
+modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx);
+savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "");
 %%
 function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
     load(eegPreFilename,'eeg')

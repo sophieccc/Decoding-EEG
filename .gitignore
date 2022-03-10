@@ -136,3 +136,4 @@ python/data/newStim.mat
 python/data/newStim32Avg.mat
 python/data/newStim64.mat
 python/data/newStim32AvgModel.mat
+python/data/newStim32MCCA.mat
