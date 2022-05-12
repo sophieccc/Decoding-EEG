@@ -22,7 +22,7 @@ def analyse_audio(filename, compressed_data):
     # Using stereo data so just use one side/column.
     audio_left = audio[:, 0]
 
-    # Using a python wrapper for pyworld so array needs to be C-compatible.
+    # Using a python wrapper for pyworld as array needs to be C-compatible.
     audio_left = audio_left.copy(order='C')
 
     # Getting vocoder parameters.

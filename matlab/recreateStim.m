@@ -7,7 +7,7 @@ stimData = origStim.data;
 
 for i = 3:5
     for j = 1:size(stimData,2)
-        name = "sub0_pred_64_feature" + i + ".mat";
+        name = "mcca_64_results/sub0_pred_64_feature" + i + ".mat";
         feat = load(name);
         featData = feat.predAll;
         x = featData{j};

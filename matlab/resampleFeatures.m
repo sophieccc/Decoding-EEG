@@ -10,13 +10,15 @@ else
     stimData = stim.data;
 end
 
-for i = 3:size(stimData,1)
+for i = 5:6
     for j = 1:size(stimData,2)
         x = stimData{i,j};
-        y = resample(x, 128, 200);
+        y = cast(x,'double');
+        y = resample(y, 64, 200);
         stimData{i,j} = y;
     end
 end
 
+stim.fs = 64.0;
 stim.data = stimData;
-save("dataStim.mat","stim");
+save("newStim64.mat","stim");

@@ -30,7 +30,7 @@ bandpassFilterRange = [1,8]; % Hz (indicate 0 to avoid running the low-pass
                           % e.g., [0,8] will apply only a low-pass filter
                           % at 8 Hz
 % changed by sophie
-downFs = 64; % Hz. *** fs/downFs must be an integer value ***
+downFs = 32; % Hz. *** fs/downFs must be an integer value ***
 
 eegFilenames = dir([dataMainFolder,dataCNDSubfolder,'dataSub*.mat']);
 nSubs = length(eegFilenames);
@@ -115,10 +115,12 @@ for sub = 1:nSubs
 end
 
 %% 
+% Get individual predictions with normal eeg for numSubs subjects.
 
 clear modelAll
 dirTRF = -1; % Backward TRF model
-stimIdx = 3;
+stimIdx = 5;
+numSubs = 5;
 
 % Loading Stim data
 stimFilename = 'dataStim_64.mat';
@@ -126,7 +128,7 @@ disp(['Loading stimulus data: ','dataStim_64.mat'])
 load(stimFilename,'stim')
 
 % Get models for: 1 feature, [subIdx] subjects, all observations.
-for subIdx = 1:5
+for subIdx = 1:numSubs
     % Loading preprocessed EEG
     eegPreFilename = [dataMainFolder,dataCNDSubfolder,'pre_',eegFilenames(subIdx).name];
     disp(['Loading preprocessed EEG data: pre_',eegFilenames(subIdx).name])
@@ -136,6 +138,8 @@ for subIdx = 1:5
 end
 
 %%
+% Get average of individual predictions with normal eeg for numSubs subjects.
+
 % Loading Stim data
 
 stimIdx = 5;
@@ -165,6 +169,9 @@ modelAll = avgStruct;
 save(name, 'modelAll');
 
 %%
+
+% Get individual prediction with normal eeg for one subject.
+
 dirTRF = -1; % Backward TRF model
 stimIdx = 5;
 
@@ -178,8 +185,8 @@ disp(['Loading preprocessed EEG data: pre_',eegFilenames(1).name])
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
 savePred(stimFeature, eeg, modelAll, stimIdx, 1, "avg_");
 
-%%
-%% MCCA
+%% 
+%  MCCA
 
 clear modelAll
 dirTRF = -1; % Backward TRF model
@@ -187,16 +194,17 @@ stimIdx = 5;
 subIdx = 0;
 
 % Loading Stim data
-stimFilename = 'dataStim_64.mat';
-disp(['Loading stimulus data: ','dataStim_64.mat'])
+stimFilename = 'dataStim_32.mat';
+disp(['Loading stimulus data: ','dataStim_32.mat'])
 load(stimFilename,'stim')
 
-eegPreFilename = 'mcca/pre_subData64.mat';
+eegPreFilename = 'mcca/pre_subData232.mat';
 disp('Loading preprocessed EEG data')
 
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
 modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx);
 savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "");
+
 %%
 function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
     load(eegPreFilename,'eeg')

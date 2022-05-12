@@ -138,3 +138,6 @@ python/data/newStim64.mat
 python/data/newStim32AvgModel.mat
 python/data/newStim32MCCA.mat
 python/data/newStim64MCCA.mat
+python/sti.py
+python/data/newStim32128MCCA.mat
+python/data/newStim32Indiv.mat
