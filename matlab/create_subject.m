@@ -1,4 +1,4 @@
-yy = load("yy.mat");
+yy = load("yy2.mat");
 mccaData = yy.yy;
 
 eegFile = load("combined_subs.mat", "eeg");
@@ -17,4 +17,4 @@ origStruct = load("../../datasets/LalorNatSpeech/dataCND/dataSub1.mat");
 origEeg = origStruct.eeg;
 eeg = struct(origStruct.eeg);
 eeg.data = subData;
-save("subData.mat","eeg");
+save("subData2.mat","eeg");

@@ -16,14 +16,15 @@ bandpassFilterRange = [1,8]; % Hz (indicate 0 to avoid running the low-pass
                           % e.g., [0,8] will apply only a low-pass filter
                           % at 8 Hz
 % changed by sophie
-downFs = 64; % Hz. *** fs/downFs must be an integer value ***
+downFs = 32; % Hz. *** fs/downFs must be an integer value ***
 
-stimIdx = 4; % 1: env; 2: word onset; 3: f0; 4: sp; 5: ap; 6: vuv;
+%stimIdx = 4; % 1: env; 2: word onset; 3: f0; 4: sp; 5: ap; 6: vuv;
 
 %% Preprocess EEG - Natural speech listening experiment
 % Loading EEG data
-eegFilename = 'mcca/subData.mat';
-load(eegFilename,'eeg')
+directory = '';
+eegFilename = 'subData2.mat';
+load([directory,eegFilename],'eeg')
 eeg = cndNewOp(eeg,'Load'); % Saving the processing pipeline in the eeg struct
 
 % Filtering - LPF (low-pass filter)
@@ -69,6 +70,13 @@ if bandpassFilterRange(1) > 0
     eeg = cndNewOp(eeg,'HPF');
 end
 
+% Replacing bad channels
+if isfield(eeg,'chanlocs')
+    for tr = 1:length(eeg.data)
+        eeg.data{tr} = removeBadChannels(eeg.data{tr}, eeg.chanlocs);
+    end
+end
+
 % Re-referencing EEG data
 eeg = cndReref(eeg,reRefType);
 
@@ -83,5 +91,5 @@ if isfield(eeg,'paddingStartSample')
 end
 
 % Saving preprocessed data
-eegPreFilename = 'pre_subData64.mat';
+eegPreFilename = [directory, 'chanlocs_pre_', eegFilename];
 save(eegPreFilename,'eeg')

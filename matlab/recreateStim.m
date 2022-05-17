@@ -1,22 +1,22 @@
-function recreateStim()
+function recreateStim(templateStim, outputName, fs)
 
-origStruct = load("dataStim_64.mat");
+origStruct = load(templateStim);
 origStim = origStruct.stim;
 newStim = struct(origStruct.stim);
 stimData = origStim.data;
 
 for i = 3:5
     for j = 1:size(stimData,2)
-        name = "mcca_64_results/sub0_pred_64_feature" + i + ".mat";
+        name = "avg_sub_results/avg2sub0_pred_32_feature" + i + ".mat";
         feat = load(name);
         featData = feat.predAll;
         x = featData{j};
         y = cast(x,'double');
-        y = resample(y, 200, 64);
+        y = resample(y, 200, fs);
         stimData{i,j} = y;
     end
 end
 
 newStim.data = stimData;
 stim = newStim;
-save("newStim64MCCA.mat","stim");
+save(outputName,"stim");

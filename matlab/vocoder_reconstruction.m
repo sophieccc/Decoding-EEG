@@ -123,8 +123,8 @@ stimIdx = 5;
 numSubs = 5;
 
 % Loading Stim data
-stimFilename = 'dataStim_64.mat';
-disp(['Loading stimulus data: ','dataStim_64.mat'])
+stimFilename = 'dataStim_32.mat';
+disp(['Loading stimulus data: ','dataStim_32.mat'])
 load(stimFilename,'stim')
 
 % Get models for: 1 feature, [subIdx] subjects, all observations.
@@ -133,9 +133,29 @@ for subIdx = 1:numSubs
     eegPreFilename = [dataMainFolder,dataCNDSubfolder,'pre_',eegFilenames(subIdx).name];
     disp(['Loading preprocessed EEG data: pre_',eegFilenames(subIdx).name])
     [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-    modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx);
+    modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "");
     savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "");
 end
+
+%%
+%% 
+% normal individual.
+
+clear modelAll
+dirTRF = -1; % Backward TRF model
+stimIdx = 5;
+
+% Loading Stim data
+stimFilename = 'dataStim_32.mat';
+disp(['Loading stimulus data: ','dataStim_32.mat'])
+load(stimFilename,'stim')
+
+% Loading preprocessed EEG
+eegPreFilename = 'avgSubData';
+disp(['Loading preprocessed EEG data: ',eegPreFilename])
+[stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
+modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, 0, "avg2");
+savePred(stimFeature, eeg, modelAll, stimIdx, 0, "avg2");
 
 %%
 % Get average of individual predictions with normal eeg for numSubs subjects.
@@ -143,7 +163,7 @@ end
 % Loading Stim data
 
 stimIdx = 5;
-fileEnd = "_model_64_feature" + stimIdx + ".mat";
+fileEnd = "_model_32_feature" + stimIdx + ".mat";
 modelFilenames = ["sub1" + fileEnd, "sub2" + fileEnd, "sub3" + fileEnd, "sub4" + fileEnd, "sub5" + fileEnd];
 avgStruct = struct([]);
 for i = 1:20
@@ -172,12 +192,11 @@ save(name, 'modelAll');
 
 % Get individual prediction with normal eeg for one subject.
 
-dirTRF = -1; % Backward TRF model
-stimIdx = 5;
+stimIdx = 3;
 
 % Loading Stim data
-stimFilename = 'dataStim_64.mat';
-disp(['Loading stimulus data: ','dataStim_64.mat'])
+stimFilename = 'dataStim_32.mat';
+disp(['Loading stimulus data: ','dataStim_32.mat'])
 load(stimFilename,'stim')
 
 eegPreFilename = [dataMainFolder,dataCNDSubfolder,'pre_',eegFilenames(1).name];
@@ -198,17 +217,100 @@ stimFilename = 'dataStim_32.mat';
 disp(['Loading stimulus data: ','dataStim_32.mat'])
 load(stimFilename,'stim')
 
-eegPreFilename = 'mcca/pre_subData232.mat';
+eegPreFilename = 'mcca/pre_subData3232.mat';
 disp('Loading preprocessed EEG data')
 
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx);
-savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "");
+modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "mix");
+savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "mix");
 
-%%
-function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
-    load(eegPreFilename,'eeg')
+%% testing an avg thing
+
+stimIdx = 3;
+
+% Loading avg model
+avgModelFilename = ['avg_sub_results/avg_model_32_feature', num2str(stimIdx), '.mat'];
+disp(['Loading model data: ','avg_model_32_feature', num2str(stimIdx), '.mat']);
+avgModel = load(avgModelFilename,'modelAll').modelAll;
+
+curr = zeros(20,19);
+for sub = 1:19
+    clear stim stimFeature eeg
+    % Loading Stim data
+    stimFilename = 'dataStim_32.mat';
+    disp(['Loading stimulus data: ','dataStim_32.mat'])
+    load(stimFilename,'stim')
     
+    % eeg
+    eegPreFilename = ['../datasets/LalorNatSpeech/dataCND/pre_dataSub',num2str(sub),'.mat'];
+    disp('Loading preprocessed EEG data')
+    [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
+    currVals = savePred(stimFeature, eeg, avgModel, stimIdx, sub, "");
+    curr(:,sub) = currVals;
+end
+
+rVals = zeros(20,1);
+for i=1:20
+    rVals(i,:) = mean(curr(i,:));
+end
+
+name =  "avg_rvals_32_feature" + stimIdx + ".mat";
+save(name,"rVals");
+
+%% 
+%  MCCA individual components
+
+clear modelAll
+dirTRF = -1; % Backward TRF model
+stimIdx = 5;
+subIdx = 0;
+
+for comp = 1:16
+    % Loading Stim data
+    stimFilename = 'dataStim_32.mat';
+    disp(['Loading stimulus data: ','dataStim_32.mat'])
+    load(stimFilename,'stim')
+    
+    eegPreFilename = ['mcca/comps/pre_subData_comp',num2str(comp),'.mat'];
+    disp('Loading preprocessed EEG data')
+    prefix = ['mcca/comps/res/comp', num2str(comp)];
+    
+    [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
+    modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, prefix);
+    savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix);
+end
+
+%% testing thing
+
+    stimIdx = 3;
+    eegPreFilename = 'mcca/subData.mat';    
+    load(eegPreFilename,'eeg');
+    eeg = pickComponents(eeg, [1,3,5,7,8,9,10,15,16]);
+    size(eeg.data{1})
+    
+%%
+
+function eeg = pickComponents(eeg, components)
+    for i = 1:20
+        origData = eeg.data{i};
+        newData = zeros(size(origData,1), size(components,2));
+        for j = 1:size(components,2)
+            hello = origData(:,components(j));
+            for x = 1:size(hello,1)
+                newData(x,j) = hello(x,1);
+            end
+        end
+        eeg.data{i} = newData;
+    end
+
+end
+
+function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
+    load(eegPreFilename,'eeg');
+
+    % only uncomment next line if you want to use a subset of MCCA comps.
+    eeg = pickComponents(eeg, [2,4,5,6,7,8,9,10,11,12,15,16]);
+
     % Making sure that stim and neural data have the same length
     stimFeature = stim;
     stimFeature.data = stimFeature.data(stimIdx,:); % chosen stimulus feature
@@ -245,7 +347,7 @@ function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
 end
 
 
-function modelAll = saveModel(stimFeature,eeg, dirTRF, stimIdx, subIdx)
+function modelAll = saveModel(stimFeature,eeg, dirTRF, stimIdx, subIdx, prefix)
     clear rAll
     clear modelAll
     
@@ -269,12 +371,12 @@ function modelAll = saveModel(stimFeature,eeg, dirTRF, stimIdx, subIdx)
         model = mTRFtrain(trainStim,trainResp,eeg.fs,dirTRF,tmin,tmax,lambdas(bestLambda),'verbose',0);
         modelAll(obsIdx) = model;
     end
-    name = "sub" + subIdx + "_model_64_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_model_32_feature" + stimIdx + ".mat";
     save(name,"modelAll");
 end
 
 
-function savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix)
+function rVals = savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix)
     clear predAll
     rVals = [];
     for obsIdx = 1:length(stimFeature.data)
@@ -291,9 +393,9 @@ function savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix)
         predAll{obsIdx} = pred;
     end
 
-    name = prefix + "sub" + subIdx + "_pred_64_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_pred_32_feature" + stimIdx + ".mat";
     save(name,"predAll");
-    name = prefix + "sub" + subIdx + "_rvals_64_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_rvals_32_feature" + stimIdx + ".mat";
     save(name,"rVals");
 end
 

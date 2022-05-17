@@ -9,35 +9,35 @@ addpath eeglab2021.1
 eeglab
 
 %%
-stimIdx = 5;
+stimIdx = 3;
 
 %% Compare r values
 
 indiv_r_file = ['indiv_sub_results/sub1_rvals_32_feature', num2str(stimIdx), '.mat'];
 indivR = load(indiv_r_file,'rVals').rVals;
 
-mcca128_r_file = ['mcca_32_results/sub0_rvals_32_128_feature', num2str(stimIdx), '.mat'];
-mccaR128 = load(mcca128_r_file,'rVals').rVals;
-
 mcca_r_file = ['mcca_32_results/sub0_rvals_32_feature', num2str(stimIdx), '.mat'];
 mccaR = load(mcca_r_file,'rVals').rVals;
 
-mcca64_r_file = ['mcca_64_results/sub0_rvals_64_feature', num2str(stimIdx), '.mat'];
-mcca64R = load(mcca64_r_file,'rVals').rVals;
+mcca128_r_file = ['mcca_32_results/sub0_rvals_32_128_feature', num2str(stimIdx), '.mat'];
+mccaR128 = load(mcca128_r_file,'rVals').rVals;
 
-avg_r_file = ['avg_sub_results/avg_sub1_rvals_32_feature', num2str(stimIdx), '.mat'];
+mccaCombs_r_file = ['mcca_combs/mixsub0_rvals_32_feature', num2str(stimIdx), '.mat'];
+mccaCombs = load(mccaCombs_r_file,'rVals').rVals;
+
+avg_r_file = ['avg_sub_results/avg2sub0_rvals_32_feature', num2str(stimIdx), '.mat'];
 avgR = load(avg_r_file,'rVals').rVals;
 
-data = {indivR;mccaR128;mccaR;mcca64R;avgR};
+data = {indivR;mccaR;mccaR128;mccaCombs;avgR};
 curr = zeros(20,5);
 
-for i = 1:size(data,1)
+for i = 1:5
     currData = data{i,:};
     for row = 1:20
         total = 0;
         for col = 1:size(currData,2)
             val = currData(row,col);
-            total = total + val;
+            total = total + abs(val);
         end
         total = total / size(currData,2);
         curr(row, i) = total;
@@ -45,14 +45,44 @@ for i = 1:size(data,1)
 end
 
 h = bar(curr);
-set(h, {'DisplayName'}, {'Individual','MCCA32', 'MCCA32 (128)','MCCA64','Average'}')
+set(h, {'DisplayName'}, {'Individual','MCCA32', 'MCCA32 (128)','mccaCombs','Average'}')
 run prepExport.m
 legend() 
 
+names = {'Individual','MCCA32', 'MCCA32 (128)','mccaCombs','Average'};
 for model = 1:5
     %testAccuracy(curr(:, model));
-    disp(['Mean r = ',num2str(mean(curr(:,model)))])
+    disp(['Mean r for ', names(model), ' = ',num2str(mean(curr(:,model)))])
 end
+
+
+%% evaluating individual components
+
+curr = zeros(20,16);
+
+for i = 1:16
+    filename = ['mcca/comps/res/comp', num2str(i), 'sub0_rvals_32_feature5.mat'];
+    rVals = load(filename,'rVals').rVals;
+    currData = rVals;
+    for row = 1:20
+        total = 0;
+        for col = 1:size(currData,2)
+            val = currData(row,col);
+            total = total + abs(val);
+        end
+        total = total / size(currData,2);
+        curr(row, i) = total;
+    end
+end
+
+for j = 1:16
+    %testAccuracy(curr(:, model));
+    disp(['Mean r for ', num2str(j), ' = ',num2str(mean(curr(:,j)))])
+end
+
+%3: 1,3,5,7,8,9,10,15,16 (all above 0.015)
+%4: 7,8,9,10,15 (all above 0.015)
+%5: 2,4,5,6,7,8,9,10,11,12,15,16
 
 
 %%
@@ -63,8 +93,8 @@ disp(['Loading model data: ','sub0_model_32_feature', num2str(stimIdx), '.mat'])
 mccaModel = load(modelFilename,'modelAll').modelAll;
 
 % Loading avg model data
-avgModelFilename = ['avg_sub_results/avg_model_32_feature', num2str(stimIdx), '.mat'];
-disp(['Loading model data: ','avg_model_32_feature', num2str(stimIdx), '.mat']);
+avgModelFilename = ['avg_sub_results/avg2sub0_model_32_feature', num2str(stimIdx), '.mat'];
+disp(['Loading model data: ','avg2sub0_model_32_feature', num2str(stimIdx), '.mat']);
 avgModel = load(avgModelFilename,'modelAll').modelAll;
 
 
@@ -77,25 +107,37 @@ plotGFP(avgAvgModel);
 %%
 
 % Loading mcca prediction data
-mccaFile = ['mcca_32_results/sub0_pred_32_feature', num2str(stimIdx), '.mat'];
-disp(['Loading model data: ','sub0_pred_32_feature', num2str(stimIdx), '.mat']);
-mccaPred = load(mccaFile,'predAll').predAll{1};
+mccaFile = ['mcca_32_results/sub0_pred_32_128_feature', num2str(stimIdx), '.mat'];
+disp(['Loading model data: ','sub0_pred_32_128_feature', num2str(stimIdx), '.mat']);
 
 % Loading avg prediction data
-avgFile = ['avg_sub_results/avg_pred_32_feature', num2str(stimIdx), '.mat'];
-disp(['Loading model data: ','avg_pred_32_feature', num2str(stimIdx), '.mat']);
-avgPred = load(avgFile,'predAll').predAll{1};
-avgPred = avgPred(1:size(mccaPred,1),:);
+avgFile = ['avg_sub_results/avg2sub0_pred_32_feature', num2str(stimIdx), '.mat'];
+disp(['Loading model data: ','avg2sub0_pred_32_feature', num2str(stimIdx), '.mat']);
 
 % Loading stimulus data
 stimFile = 'dataStim_32.mat';
 disp('Loading model data: dataStim_32.mat');
 stim = load(stimFile,'stim').stim;
-feature = stim.data{stimIdx,1};
-feature = feature(1:size(mccaPred,1),:);
 
-mccaCorr = corrcoef(feature,mccaPred)
-avgCorr = corrcoef(feature,avgPred)
+valsMCCA = [];
+valsAvg = [];
+for i = 1:20
+    mccaPred = load(mccaFile,'predAll').predAll{i};
+
+    avgPred = load(avgFile,'predAll').predAll{i};
+    avgPred = avgPred(1:size(mccaPred,1),:);
+
+    feature = stim.data{stimIdx,i};
+    feature = feature(1:size(mccaPred,1),:);
+    
+    mccaCorr = corrcoef(feature,mccaPred);
+    valsMCCA = [valsMCCA mccaCorr(1,2)];
+    avgCorr = corrcoef(feature,avgPred);
+    valsAvg = [valsAvg avgCorr(1,2)];
+end
+
+disp(['Mean corr for MCCA = ',num2str(mean(valsMCCA))])
+disp(['Mean corr for Avg = ',num2str(mean(valsAvg))])
 
 %%
 
