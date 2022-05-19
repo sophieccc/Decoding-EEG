@@ -29,8 +29,6 @@ def main():
         print('Log-likelihood Ratio : ' + str(pysepm.llr(clean, denoised, fs)))
         print('Cepstrum Distance Objective Speech Quality Measure : ' +
               str(pysepm.cepstrum_distance(clean, denoised, fs)))
-        print('Coherence and speech intelligibility index  : ' +
-              str(pysepm.csii(clean, denoised, fs)))
 
     # # read audio
     # refAudio, refRate = readwav('audio_files/audio1.wav')
