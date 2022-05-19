@@ -4,26 +4,22 @@
 clear variables
 numSubs = 19;
 numObs = 20;
-%eegMat = constructEegMat(numSubs, numObs);
-eegMat = getSavedEegMat();
+eegMat = constructEegMat(numSubs, numObs);
+%eegMat = getSavedEegMat();
 
 NPCS = 128;
 fprintf('Running mCCA \b\n')
-ccSub = 1;
 
-numSamples = size(eegMat,1);
 for sub=1:numSubs
-    xAll = eegMat(ccSub, :, :);
+    xAll = eegMat(sub, :, :);
     xAll = permute(xAll,[2,3,1]);
     fprintf('xAll:')
     size(xAll)
-    [xpc,topcs{ccSub}] = alainPCA(xAll,NPCS);
+    [xpc,topcs{sub}] = alainPCA(xAll,NPCS);
     
     size(xpc)
-    xx(ccSub, :, :, :) = [xpc];
+    xx(sub, :, :, :) = [xpc];
     clear xAll
-    
-    ccSub = ccSub + 1;
 end
 
 [nSubj,nSamples,NPCS,nTrials] = size(xx);
@@ -33,13 +29,12 @@ C = nt_cov(xx(:,:));
 A = nt_mcca(C,NPCS);
 yy = xx(:,:)*A; % samples x mccs
 
-
 yy = yy(:,1:NPCS); 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 19 * 20 cells (inside each cell is time * channel)
 function eegMat = constructEegMat(numSubs, numObs) 
-    eeg = load("combined_subs.mat", "eeg");
+    eeg = load("combined_64_subs.mat", "eeg");
     data = eeg.eeg.data;
     eegMat = [];
     
@@ -55,10 +50,10 @@ function eegMat = constructEegMat(numSubs, numObs)
     eegMat = permute(eegMat,[3,1,2]);
     eegStruct = {};
     eegStruct.data = eegMat;
-    save("eegMat.mat","eegStruct","-v7.3");
+    save("pre64_eegMat.mat","eegStruct","-v7.3");
 end
 
 function eegMat = getSavedEegMat() 
-    eegStruct = load("eegMat.mat", "eegStruct");
+    eegStruct = load("pre64_eegMat.mat", "eegStruct");
     eegMat = eegStruct.eegStruct.data;
 end

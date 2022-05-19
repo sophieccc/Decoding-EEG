@@ -6,9 +6,8 @@ import pysepm
 
 def main():
     files = [
-        "avg32_synthesised_2.wav", "indiv32_synthesised_2.wav",
-        "mcca32_128_synthesised_2.wav", "mcca32_synthesised_2.wav",
-        "mcca64_synthesised_2.wav"
+        "indiv32_synthesised_1.wav", "avg32_synthesised_1.wav",
+        "pre_mcca_synthesised_1.wav", "cmb_mcca_synthesised_1.wav",
     ]
 
     for f in files:

@@ -16,7 +16,6 @@ addpath libs/cnsp_utils/cnd
 addpath libs/mTRF-Toolbox_v2/mtrf
 addpath libs/NoiseTools
 addpath eeglab2021.1
-eeglab
 
 
 %% Parameters - Natural speech listening experiment
@@ -213,16 +212,16 @@ stimIdx = 5;
 subIdx = 0;
 
 % Loading Stim data
-stimFilename = 'dataStim_32.mat';
+stimFilename = 'stim_input_files/dataStim_32.mat';
 disp(['Loading stimulus data: ','dataStim_32.mat'])
 load(stimFilename,'stim')
 
-eegPreFilename = 'mcca/pre_subData3232.mat';
+eegPreFilename = 'mcca/subData_pre_128.mat';
 disp('Loading preprocessed EEG data')
 
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "mix");
-savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "mix");
+modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "cmb");
+savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "cmb");
 
 %% testing an avg thing
 
@@ -262,16 +261,16 @@ save(name,"rVals");
 
 clear modelAll
 dirTRF = -1; % Backward TRF model
-stimIdx = 5;
+stimIdx = 3;
 subIdx = 0;
 
 for comp = 1:16
     % Loading Stim data
-    stimFilename = 'dataStim_32.mat';
+    stimFilename = 'stim_input_files/dataStim_32.mat';
     disp(['Loading stimulus data: ','dataStim_32.mat'])
     load(stimFilename,'stim')
     
-    eegPreFilename = ['mcca/comps/pre_subData_comp',num2str(comp),'.mat'];
+    eegPreFilename = ['mcca/comps/subData_comp',num2str(comp),'.mat'];
     disp('Loading preprocessed EEG data')
     prefix = ['mcca/comps/res/comp', num2str(comp)];
     
@@ -309,7 +308,8 @@ function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
     load(eegPreFilename,'eeg');
 
     % only uncomment next line if you want to use a subset of MCCA comps.
-    eeg = pickComponents(eeg, [2,4,5,6,7,8,9,10,11,12,15,16]);
+    V = uint32(1):uint32(64);
+    eeg = pickComponents(eeg, V);
 
     % Making sure that stim and neural data have the same length
     stimFeature = stim;

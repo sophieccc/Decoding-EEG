@@ -124,17 +124,17 @@ def synthesise_audio(mat, fs, compressed_data):
 
 
 def synthesise_all_audios(filepath, compressed_data, fs):
-    mat = sio.loadmat("data/" + filepath + '.mat')
+    mat = sio.loadmat("../../CNSP-workshop2021_code/CNSP_tutorial/stim_output_files/" + filepath + '.mat')
     data = mat['stim']['data'][0, 0]
 
     for index in range(0, 3):
         audio = synthesise_audio(data[:, index], fs, compressed_data)
-        sf.write('mcca64_synthesised_' + str(index) + '.wav', audio, fs)
+        sf.write('cmb_mcca_synthesised_' + str(index) + '.wav', audio, fs)
 
 
 def main():
     compressed_data = 0
-    path = 'newStim64MCCA'
+    path = 'cmbNewStimMCCA32'
     args = sys.argv[1:]
     if len(args) > 0:
         path = args[0]

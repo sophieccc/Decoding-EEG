@@ -23,7 +23,7 @@ downFs = 32; % Hz. *** fs/downFs must be an integer value ***
 %% Preprocess EEG - Natural speech listening experiment
 % Loading EEG data
 directory = '';
-eegFilename = 'subData2.mat';
+eegFilename = 'subData_128.mat';
 load([directory,eegFilename],'eeg')
 eeg = cndNewOp(eeg,'Load'); % Saving the processing pipeline in the eeg struct
 
