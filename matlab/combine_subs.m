@@ -4,11 +4,13 @@ load(stimFilename,'stim')
 stimFeature = stim;
 stimFeature.data = stimFeature.data(1,:);
 %     minSizes = zeros(20);
+num_subs = 5;
 
-data = cell(19,20);
-prefix = "datasets/LalorNatSpeech/dataCND/pre_dataSub";
-for sub = 1:19
-    filename = prefix + sub + ".mat";
+data = cell(num_subs,20);
+prefix = "pre_dataSub";
+subs = ["R2383", "R2697", "R2816", "R2818", "R2820"]; % just for MEG
+for sub = 1:num_subs
+    filename = prefix + subs(sub) + ".mat";
     fileData = load(filename);
     eeg = fileData.eeg;
     eegData = eeg.data;
@@ -22,7 +24,7 @@ for sub = 1:19
 %             else
 %                 minLen = minSizes(obs);
 %             end
-        minLen = 10603; %5302; %21205;
+        minLen = 2746; %10603; %5302; %21205;
         eegData{obs} = double(eegData{obs}(1:minLen,:));
 
         [dim1, dim2] = cellfun(@size,eegData(:,obs),'uni',false);
@@ -33,4 +35,4 @@ for sub = 1:19
 end
 eeg = {};
 eeg.data = data;
-save("combined_64_subs.mat","eeg","-v7.3");
+save("combined_meg_subs.mat","eeg","-v7.3");

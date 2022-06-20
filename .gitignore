@@ -141,3 +141,7 @@ python/data/newStim64MCCA.mat
 python/sti.py
 python/data/newStim32128MCCA.mat
 python/data/newStim32Indiv.mat
+python/200fs32Bands.mat
+python/200fsAllBands.mat
+python/32fsAllBands.mat
+python/audio_files2.mat

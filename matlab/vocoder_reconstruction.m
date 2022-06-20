@@ -19,9 +19,10 @@ addpath eeglab2021.1
 
 
 %% Parameters - Natural speech listening experiment
-dataMainFolder = '../datasets/LalorNatSpeech/';
-% dataMainFolder = '../datasets/LalorNatSpeechReverse/';
-dataCNDSubfolder = 'dataCND/';
+% EEG: dataMainFolder = '../datasets/LalorNatSpeech/';
+% EEG: dataCNDSubfolder = 'dataCND/';
+dataMainFolder = '../';
+dataCNDSubfolder = '';
 
 reRefType = 'Avg'; % or 'Mastoids'
 bandpassFilterRange = [1,8]; % Hz (indicate 0 to avoid running the low-pass
@@ -29,7 +30,8 @@ bandpassFilterRange = [1,8]; % Hz (indicate 0 to avoid running the low-pass
                           % e.g., [0,8] will apply only a low-pass filter
                           % at 8 Hz
 % changed by sophie
-downFs = 32; % Hz. *** fs/downFs must be an integer value ***
+% EEG: downFs = 32; % Hz. *** fs/downFs must be an integer value ***
+downFs = 100;
 
 eegFilenames = dir([dataMainFolder,dataCNDSubfolder,'dataSub*.mat']);
 nSubs = length(eegFilenames);
@@ -142,11 +144,11 @@ end
 
 clear modelAll
 dirTRF = -1; % Backward TRF model
-stimIdx = 5;
+stimIdx = 3;
 
 % Loading Stim data
-stimFilename = 'dataStim_32.mat';
-disp(['Loading stimulus data: ','dataStim_32.mat'])
+stimFilename = 'stim_input_files/fixedStim32.mat';
+disp(['Loading stimulus data: ','fixedSti32.mat'])
 load(stimFilename,'stim')
 
 % Loading preprocessed EEG
@@ -190,18 +192,17 @@ save(name, 'modelAll');
 %%
 
 % Get individual prediction with normal eeg for one subject.
-
-stimIdx = 3;
+dirTRF = -1; % Backward TRF model
+stimIdx = 5;
 
 % Loading Stim data
-stimFilename = 'dataStim_32.mat';
-disp(['Loading stimulus data: ','dataStim_32.mat'])
+stimFilename = 'stim_input_files/meg_audio_filesX.mat';
 load(stimFilename,'stim')
 
-eegPreFilename = [dataMainFolder,dataCNDSubfolder,'pre_',eegFilenames(1).name];
-disp(['Loading preprocessed EEG data: pre_',eegFilenames(1).name])
+eegPreFilename = "../pre_dataSubR2820";
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-savePred(stimFeature, eeg, modelAll, stimIdx, 1, "avg_");
+modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, 5, "meg");
+savePred(stimFeature, eeg, modelAll, stimIdx, 5, "meg");
 
 %% 
 %  MCCA
@@ -212,16 +213,16 @@ stimIdx = 5;
 subIdx = 0;
 
 % Loading Stim data
-stimFilename = 'stim_input_files/dataStim_32.mat';
-disp(['Loading stimulus data: ','dataStim_32.mat'])
+stimFilename = 'stim_input_files/meg_audio_filesX.mat';
 load(stimFilename,'stim')
 
-eegPreFilename = 'mcca/subData_pre_128.mat';
+eegPreFilename = 'mcca/subData_meg.mat';
 disp('Loading preprocessed EEG data')
 
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "cmb");
-savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "cmb");
+%stimFeature = randomiseObservations(stimFeature);
+modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "meg");
+savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "meg");
 
 %% testing an avg thing
 
@@ -244,7 +245,7 @@ for sub = 1:19
     eegPreFilename = ['../datasets/LalorNatSpeech/dataCND/pre_dataSub',num2str(sub),'.mat'];
     disp('Loading preprocessed EEG data')
     [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-    currVals = savePred(stimFeature, eeg, avgModel, stimIdx, sub, "");
+    [currVals, ~] = savePred(stimFeature, eeg, avgModel, stimIdx, sub, "");
     curr(:,sub) = currVals;
 end
 
@@ -267,12 +268,11 @@ subIdx = 0;
 for comp = 1:16
     % Loading Stim data
     stimFilename = 'stim_input_files/dataStim_32.mat';
-    disp(['Loading stimulus data: ','dataStim_32.mat'])
     load(stimFilename,'stim')
     
-    eegPreFilename = ['mcca/comps/subData_comp',num2str(comp),'.mat'];
+    eegPreFilename = ['mcca/components/subData_comp',num2str(comp),'.mat'];
     disp('Loading preprocessed EEG data')
-    prefix = ['mcca/comps/res/comp', num2str(comp)];
+    prefix = ['mcca/components/res/comp', num2str(comp)];
     
     [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
     modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, prefix);
@@ -287,7 +287,58 @@ end
     eeg = pickComponents(eeg, [1,3,5,7,8,9,10,15,16]);
     size(eeg.data{1})
     
+    %%
+    stimIdx = 3;
+    
+    % Loading Stim data
+    stimFilename = 'stim_input_files/dataStim_32.mat';
+    load(stimFilename,'stim')
+    
+    eegPreFilename = 'mcca/subData_pre_128.mat';
+    disp('Loading preprocessed EEG data')
+    
+    [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
+    stimFeature = randomiseObservations(stimFeature);
+
+%% 
+%  MCCA FOR EACH BAND
+
+clear modelAll
+dirTRF = -1; % Backward TRF model
+stimIdx = 4;
+subIdx = 0;
+
+% Loading Stim data
+stimFilename = 'stim_input_files/dataStim_32.mat';
+load(stimFilename,'stim')
+
+eegPreFilename = 'mcca/subData_pre_128.mat';
+disp('Loading preprocessed EEG data')
+
+[stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
+thePreds = cell(32,1);
+theRs = cell(32,1);
+for b = 1:32
+    stimFeature2 = stimFeature;
+    for i = 1:20
+        stimFeature2.data{1,i} = stimFeature2.data{1,i}(:,b);
+    end
+    modelAll = saveModel(stimFeature2, eeg, dirTRF, stimIdx, subIdx, "");
+    [hi1, hi2] = savePred(stimFeature2, eeg, modelAll, stimIdx, subIdx, "");
+    theRs{b}= hi1;
+    thePreds{b} = hi2;
+end
+
+
 %%
+
+function stimFeature = randomiseObservations(stimFeature)
+    oldStimFeat = stimFeature;
+    r = randperm(20);
+    for i = 1:20
+        stimFeature.data{i} = oldStimFeat.data{r(i)};
+    end
+end
 
 function eeg = pickComponents(eeg, components)
     for i = 1:20
@@ -308,7 +359,7 @@ function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
     load(eegPreFilename,'eeg');
 
     % only uncomment next line if you want to use a subset of MCCA comps.
-    V = uint32(1):uint32(64);
+    V = uint32(1):uint32(32);
     eeg = pickComponents(eeg, V);
 
     % Making sure that stim and neural data have the same length
@@ -332,16 +383,16 @@ function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim)
     
     % Normalising EEG data
     clear tmpEnv tmpEeg
-    tmpEnv = stimFeature.data{1};
+    %tmpEnv = stimFeature.data{1};
     tmpEeg = eeg.data{1};
     for tr = 2:length(stimFeature.data) % getting all values
-        tmpEnv = cat(1,tmpEnv,stimFeature.data{tr});
+        %tmpEnv = cat(1,tmpEnv,stimFeature.data{tr});
         tmpEeg = cat(1,tmpEeg,eeg.data{tr});
     end
-    normFactorEnv = std(tmpEnv(:)); clear tmpEnv;
+    %normFactorEnv = std(tmpEnv(:)); clear tmpEnv;
     normFactorEeg = std(tmpEeg(:)); clear tmpEeg;
     for tr = 1:length(stimFeature.data) % normalisation
-        stimFeature.data{tr} = stimFeature.data{tr}/normFactorEnv;
+        %stimFeature.data{tr} = stimFeature.data{tr}/normFactorEnv;
         eeg.data{tr} = eeg.data{tr}/normFactorEeg;
     end
 end
@@ -371,15 +422,16 @@ function modelAll = saveModel(stimFeature,eeg, dirTRF, stimIdx, subIdx, prefix)
         model = mTRFtrain(trainStim,trainResp,eeg.fs,dirTRF,tmin,tmax,lambdas(bestLambda),'verbose',0);
         modelAll(obsIdx) = model;
     end
-    name = prefix + "sub" + subIdx + "_model_32_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_model_100_32_feature" + stimIdx + ".mat";
     save(name,"modelAll");
 end
 
 
-function rVals = savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix)
+function [rVals, predAll] = savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix)
     clear predAll
     rVals = [];
-    for obsIdx = 1:length(stimFeature.data)
+    numObs = length(stimFeature.data);
+    for obsIdx = 1:numObs
         testStim = stimFeature.data(:,obsIdx);
         testResp = eeg.data(:,obsIdx);
         model = modelAll(obsIdx);
@@ -393,9 +445,9 @@ function rVals = savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix)
         predAll{obsIdx} = pred;
     end
 
-    name = prefix + "sub" + subIdx + "_pred_32_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_pred_100_32_feature" + stimIdx + ".mat";
     save(name,"predAll");
-    name = prefix + "sub" + subIdx + "_rvals_32_feature" + stimIdx + ".mat";
+    name = prefix + "sub" + subIdx + "_rvals_100_32_feature" + stimIdx + ".mat";
     save(name,"rVals");
 end
 

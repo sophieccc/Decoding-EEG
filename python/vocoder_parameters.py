@@ -32,6 +32,7 @@ def analyse_audio(filename, compressed_data):
 
     # Compressing parameters.
     if compressed_data:
+        print('compressing stim data...')
         f0 = np.log10(f0 + 1)
         aperiodicity = np.log10(-np.transpose(np.transpose(aperiodicity)) + 1)
         spectrogram[spectrogram > 1] = 1
@@ -74,6 +75,7 @@ def analyse_all_audios(directory_path, compressed_data):
     directory = os.fsencode(directory_path)
     data = []
     num_files = len(os.listdir(directory))
+    num_files=2
     sorted_paths = order_files(directory)
 
     for index in range(0, num_files):
@@ -84,7 +86,7 @@ def analyse_all_audios(directory_path, compressed_data):
         features = format_features(f0, spectrogram, aperiodicity, vuv)
         data.append(features)
 
-    data_stim = sio.loadmat('data/dataStim.mat')
+    data_stim = sio.loadmat('../../CNSP-workshop2021_code/datasets/LalorNatSpeech/dataCND/dataStim.mat')
     stim_idx = data_stim['stim']['stimIdxs'][0][0].astype('double')
     cond_idx = data_stim['stim']['condIdxs'][0][0].astype('double')
     cond_names = data_stim['stim']['condNames'][0][0]
@@ -104,12 +106,14 @@ def analyse_all_audios(directory_path, compressed_data):
 
     info["data"] = util.reduce_filter_num(info, 32, 3, INPUT_FS)
     info["data"] = util.reduce_filter_num(info, 32, 4, INPUT_FS)
-    sio.savemat("data/" + directory_path + '.mat', mdict={'stim': info})
+    sio.savemat(directory_path + '.mat', mdict={'stim': info})
 
 
 def synthesise_audio(mat, fs, compressed_data):
     f0 = mat[2][:, 0].copy(order='C')
     spectrogram = util.restore_original_filters(mat[3], 1025, INPUT_FS)
+    #spectrogram = mat[3];
+    #aperiodicity = mat[4];
     aperiodicity = util.restore_original_filters(mat[4], 1025, INPUT_FS)
     spectrogram = spectrogram.copy(order='C')
     aperiodicity = aperiodicity.copy(order='C')
@@ -124,17 +128,19 @@ def synthesise_audio(mat, fs, compressed_data):
 
 
 def synthesise_all_audios(filepath, compressed_data, fs):
-    mat = sio.loadmat("../../CNSP-workshop2021_code/CNSP_tutorial/stim_output_files/" + filepath + '.mat')
+    prefix = "../../CNSP-workshop2021_code/CNSP_tutorial/stim_output_files/"
+    #prefix = "";
+    mat = sio.loadmat(prefix + filepath + '.mat')
     data = mat['stim']['data'][0, 0]
 
-    for index in range(0, 3):
+    for index in range(3, 4):
         audio = synthesise_audio(data[:, index], fs, compressed_data)
-        sf.write('cmb_mcca_synthesised_' + str(index) + '.wav', audio, fs)
+        sf.write('result_wavs/' + filepath + '_' + str(index) + '.wav', audio, fs)
 
 
 def main():
     compressed_data = 0
-    path = 'cmbNewStimMCCA32'
+    path = 'megStim_indiv'
     args = sys.argv[1:]
     if len(args) > 0:
         path = args[0]

@@ -2,7 +2,7 @@
 % How to run it
 
 clear variables
-numSubs = 19;
+numSubs = 5;
 numObs = 20;
 eegMat = constructEegMat(numSubs, numObs);
 %eegMat = getSavedEegMat();
@@ -34,7 +34,7 @@ yy = yy(:,1:NPCS);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 19 * 20 cells (inside each cell is time * channel)
 function eegMat = constructEegMat(numSubs, numObs) 
-    eeg = load("combined_64_subs.mat", "eeg");
+    eeg = load("combined_meg_subs.mat", "eeg");
     data = eeg.eeg.data;
     eegMat = [];
     
@@ -50,10 +50,10 @@ function eegMat = constructEegMat(numSubs, numObs)
     eegMat = permute(eegMat,[3,1,2]);
     eegStruct = {};
     eegStruct.data = eegMat;
-    save("pre64_eegMat.mat","eegStruct","-v7.3");
+    save("pre_megMat.mat","eegStruct","-v7.3");
 end
 
 function eegMat = getSavedEegMat() 
-    eegStruct = load("pre64_eegMat.mat", "eegStruct");
+    eegStruct = load("pre_megMat.mat", "eegStruct");
     eegMat = eegStruct.eegStruct.data;
 end

@@ -1,7 +1,7 @@
-yy = load("yy_pre64_128.mat");
+yy = load("yy_meg.mat");
 mccaData = yy.yy;
 
-eegFile = load("combined_64_subs.mat", "eeg");
+eegFile = load("combined_meg_subs.mat", "eeg");
 eegData = eegFile.eeg.data(1,:);
 
 subData = cell(1, 20);
@@ -13,8 +13,8 @@ for obs = 1:20
     ind = ind + obsLen;
 end
 
-origStruct = load("../../datasets/LalorNatSpeech/dataCND/pre_dataSub1.mat");
+origStruct = load("../../pre_dataSubR2820.mat");
 origEeg = origStruct.eeg;
 eeg = struct(origStruct.eeg);
 eeg.data = subData;
-save("subData_pre64_128.mat","eeg");
+save("subData_meg.mat","eeg");
