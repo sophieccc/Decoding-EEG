@@ -1,4 +1,4 @@
-% Many methods of evaluating our results.
+% Many methods for evaluating our results.
 
 clear variables
 close all
@@ -12,7 +12,8 @@ addpath eeglab2021.1
 %%
 stimIdx = 3;
 
-%%
+%% Paired t-testing spectrogram trials for same/diff audio
+
 imagined=load('stim_output_files/meg/immcca_ld.mat').stim.data(4,:);
 listened=load('stim_output_files/meg/mcca_ld.mat').stim.data(4,:);
 standard=load('stim_output_files/meg/theStandard.mat').stim.data(4,:);
@@ -47,6 +48,7 @@ mean([0.1340 0.0295 0.0380 0.2225]) % p values for same listened + imagined
 mean([0.0028 0.0237 0.0263 0.0301 0.0184 0.0427 0.000073082 0.0040]) % p values for diff listened + imagined 
 
 %% Creating audio metrics bar plot
+% Values retrieved using evaluation.py
 
 % listened
 % data = [
@@ -90,19 +92,25 @@ run prepExport.m
 
 %Improvements
 legend('MCCA','Real F0','Real Spectrogram','Real Aperiodicity', 'Average Trials', 'Scale Features', 'Modulate Envelope', 'Scale + Envelope') 
+
 %% Looking at correlations between MCCA components and EEG electrodes.
 
+numSubs = 19;
+numTrials = 20;
+numChannels = 128;
+dataPrefix = '../datasets/LalorNatSpeech/dataCND/pre_dataSub';
 mcca = load('mcca/subData_pre_128.mat','eeg').eeg; 
+
 mccaData = mcca.data;
 theSize = size(mccaData{1,1},1);
-corrMat  = zeros(128,128);
-for sub = 1:19
-    fileName = ['../datasets/LalorNatSpeech/dataCND/pre_dataSub',num2str(sub),'.mat'];
+corrMat  = zeros(numChannels,numChannels);
+for sub = 1:numSubs
+    fileName = [dataPrefix,num2str(sub),'.mat'];
     eeg = load(fileName,'eeg').eeg;
     eegData = eeg.data;
-    for trial = 1:20
-        for comp = 1:128
-            for elec = 1:128
+    for trial = 1:numTrials
+        for comp = 1:numChannels
+            for elec = 1:numChannels
                     mccaNums = mccaData{1,trial}(comp,:);
                     eegNums = eegData{1,trial}(elec,:);
                     r = corrcoef(mccaNums,eegNums);
@@ -111,10 +119,10 @@ for sub = 1:19
         end
     end
 end
-corrMat = corrMat/(19 * 20);
+corrMat = corrMat/(numSubs * numTrials);
 
-compToElec = zeros(128,2);
-elecToComp = zeros(128,2);
+compToElec = zeros(numChannels,2);
+elecToComp = zeros(numChannels,2);
 for i = 1:128
     [compToElec(i,1), compToElec(i,2)] = max(corrMat(i,:));
     [elecToComp(i,1), elecToComp(i,2)] = max(corrMat(:,i));
@@ -129,16 +137,20 @@ imagesc(corrMat);
 [n2, bin2] = hist(elecToComp(:,2), unique(elecToComp(:,2)));
 [hype2,idx2] = sort(-n2);
 hi2 = bin2(idx2);
+
 %% paired t-test avg vs mcca
 
 num_trials = 4;
 comps = [8,16,8];
+avgPrefix = 'results_meg/avg_mod/average_immegsub5_rvals_100_155_feature';
+mccaPrefix = 'results_meg/not_ld/imavg_megsub0_rvals_100_';
+
 for idx = 3:5
     comp = num2str(comps(idx-2));
-    avg_r_file = ['results_meg/avg_mod/average_immegsub5_rvals_100_155_feature', num2str(idx), '.mat'];
+    avg_r_file = [avgPrefix, num2str(idx), '.mat'];
     avgR = load(avg_r_file,'rVals').rVals;
     
-    mcca_r_file = ['results_meg/not_ld/imavg_megsub0_rvals_100_',comp,'_feature', num2str(idx), '.mat'];
+    mcca_r_file = [mccaPrefix,comp,'_feature', num2str(idx), '.mat'];
 %     if idx == 5
 %         mcca_r_file = ['results_mcca/cmb/cmb_rvals_32_feature', num2str(idx), '.mat'];
 %     end
@@ -244,10 +256,12 @@ ylabel('Frequency Band')
 
 
 mcca_r_file = ['results_mcca/cmb/cmb_rvals_32_feature4.mat'];
-mccaR = load(mcca_r_file,'rVals').rVals;
-curr = zeros(32,1);
+numBands = 32;
 
-for band = 1:32
+mccaR = load(mcca_r_file,'rVals').rVals;
+curr = zeros(numBands,1);
+
+for band = 1:numBands
     theMean = mean(mccaR(:,band));
     curr(band,1) = theMean;
 end
@@ -284,8 +298,7 @@ plot(feature3);
 % subplot(3,1,3); 
 % plot(feature3);
 
-%%
-% Compare no. of components
+%% Compare no. of components
 
 % feature 3: 
 % x = [1,4,8, 16,32,128];
@@ -362,12 +375,13 @@ legend('F0','Spectrogram','Aperiodicity')
 %%
 
 comps = [128];
+num_trials = 4;
+
 for i = 1:size(comps,2)
     comp = num2str(comps(i));
     r_file = ['results_meg/not_ld/avg_megsub0_rvals_100_',comp,'_feature3.mat']; 
     rVals = load(r_file,'rVals').rVals;
     
-    num_trials = 4;
     curr = zeros(num_trials,1);
     for row = 1:num_trials
         total = 0;
@@ -389,6 +403,7 @@ end
 %% Compare r values
 
 stimIdx = 3;
+numTrials = 20;
 
 indiv_r_file = ['results_indiv/sub1_rvals_32_feature', num2str(stimIdx), '.mat'];
 indivR = load(indiv_r_file,'rVals').rVals;
@@ -400,11 +415,11 @@ mcca_r_file = ['results_mcca/cmb/cmb_rvals_32_feature', num2str(stimIdx), '.mat'
 mccaR = load(mcca_r_file,'rVals').rVals;
 
 data = {indivR;avgR;mccaR};
-curr = zeros(20,3);
+curr = zeros(numTrials,3);
 
 for i = 1:3
     currData = data{i,:};
-    for row = 1:20
+    for row = 1:numTrials
         total = 0;
         for col = 1:size(currData,2)
             val = currData(row,col);
@@ -429,12 +444,13 @@ for model = 1:3
 end
 
 %% Compare r values overall
-means = [];
-stds = [];
 num_trials = 4;
 seNum = sqrt(num_trials);
 comps = [64, 16, 64];
 comps_ld = [16,16,16];
+
+means = [];
+stds = [];
 for idx = 3:5
     comp = num2str(comps(idx-2));
     comp_ld= num2str(comps_ld(idx-2));

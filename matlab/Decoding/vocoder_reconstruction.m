@@ -1,12 +1,12 @@
 % Adapted from CNSP-Workshop 2021
 % https://cnsp-workshop.github.io/website/index.html
-% Author: Giovanni M. Di Liberto
+% Author: Giovanni M. Di Liberto, Sophie Crowley
 % Copyright 2021 - Giovanni Di Liberto
 %                  Nathaniel Zuk
 %                  Michael Crosse
 %                  Aaron Nidiffer
 %                  (see license file for details)
-% Last update: 11 February 2022
+% Last update: 19 August 2022
 
 clear all
 close all
@@ -18,27 +18,28 @@ addpath libs/NoiseTools
 addpath eeglab2021.1
 
 
-%% Parameters - Natural speech listening experiment
+%% Set Parameters
+
 % dataMainFolder = '../datasets/LalorNatSpeech/';
-% dataCNDSubfolder = 'dataCND/';
 dataMainFolder = '../';
+% dataCNDSubfolder = 'dataCND/';
 dataCNDSubfolder = '';
 
 reRefType = 'Avg'; % or 'Mastoids'
-bandpassFilterRange = [0.1,35]; % [1,8]; Hz (indicate 0 to avoid running the low-pass
-                          % or high-pass filters or both)
-                          % e.g., [0,8] will apply only a low-pass filter
-                          % at 8 Hz
-% changed by sophie
-%downFs = 32; % Hz. *** fs/downFs must be an integer value ***
+bandpassFilterRange = [0.1,35]; % for MEG
+% [1,8] for EEG; 
+% Hz (indicate 0 to avoid running the low-pass or high-pass filters or both)
+% e.g., [0,8] will apply only a low-pass filter at 8 Hz
+
 downFs = 50;
 
 eegFilenames = dir([dataMainFolder,dataCNDSubfolder,'dataSub*.mat']);
 nSubs = length(eegFilenames);
 
 stimIdx = 4; % 1: env; 2: word onset; 3: f0; 4: sp; 5: ap; 6: vuv;
+prefix = 'pre_50';
 
-%% Preprocess EEG - Natural speech listening experiment
+%% Preprocess EEG data
 for sub = 1:nSubs
     % Loading EEG data
     eegFilename = [dataMainFolder,dataCNDSubfolder,eegFilenames(sub).name];
@@ -49,11 +50,6 @@ for sub = 1:nSubs
     % Filtering - LPF (low-pass filter)
     if bandpassFilterRange(2) > 0
         hd = getLPFilt(eeg.fs,bandpassFilterRange(2));
-        
-        % Filtering each trial/run with a for loop
-%         for ii = 1:length(eeg.data)
-%             eeg.data{ii} = filtfilthd(hd,eeg.data{ii});
-%         end
         
         % Filtering each trial/run with a cellfun statement
         eeg.data = cellfun(@(x) filtfilthd(hd,x),eeg.data,'UniformOutput',false);
@@ -110,56 +106,13 @@ for sub = 1:nSubs
     end
     
     % Saving preprocessed data
-    eegPreFilename = [dataMainFolder,dataCNDSubfolder,'pre_50',eegFilenames(sub).name];
+    eegPreFilename = [dataMainFolder,dataCNDSubfolder,prefix,eegFilenames(sub).name];
     disp(['Saving preprocessed EEG data: pre_',eegFilenames(sub).name])
     save(eegPreFilename,'eeg')
 end
 
-%% 
-% Get individual predictions with normal eeg for numSubs subjects.
-
-clear modelAll
-dirTRF = -1; % Backward TRF model
-stimIdx = 5;
-numSubs = 5;
-
-% Loading Stim data
-stimFilename = 'dataStim_32.mat';
-disp(['Loading stimulus data: ','dataStim_32.mat'])
-load(stimFilename,'stim')
-
-% Get models for: 1 feature, [subIdx] subjects, all observations.
-for subIdx = 1:numSubs
-    % Loading preprocessed EEG
-    eegPreFilename = [dataMainFolder,dataCNDSubfolder,'pre_',eegFilenames(subIdx).name];
-    disp(['Loading preprocessed EEG data: pre_',eegFilenames(subIdx).name])
-    [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-    modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "");
-    savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "");
-end
-
-%%
-%% 
-% normal individual.
-
-clear modelAll
-dirTRF = -1; % Backward TRF model
-stimIdx = 3;
-
-% Loading Stim data
-stimFilename = 'stim_input_files/fixedStim32.mat';
-disp(['Loading stimulus data: ','fixedSti32.mat'])
-load(stimFilename,'stim')
-
-% Loading preprocessed EEG
-eegPreFilename = 'avgSubData';
-disp(['Loading preprocessed EEG data: ',eegPreFilename])
-[stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, 0, "avg2");
-savePred(stimFeature, eeg, modelAll, stimIdx, 0, "avg2");
-
-%%
-% Get average of individual predictions with normal eeg for numSubs subjects.
+%% Get average of individual predictions with normal brain data for numSubs subjects.
+% Rarely used.
 
 % Loading Stim data
 
@@ -189,28 +142,30 @@ name = "avg" + fileEnd;
 modelAll = avgStruct;
 save(name, 'modelAll');
 
-%%
+%% Get individual prediction with normal brain data for one subject.
+% Use for average/individual/rand model.
 
-% Get individual prediction with normal eeg for one subject.
 dirTRF = -1; % Backward TRF model
-stimIdx = 5;
+stimIdx = 3;
 
 % Loading Stim data
 stimFilename = 'stim_input_files/meg_audio_files100_4.mat';
 load(stimFilename,'stim')
 
-eegPreFilename = "../combpre_imdataSubR2820.mat";
+eegPreFilename = "../average_immegSubData.mat";
 [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim, 155);
-stimFeature = randomiseObservations(stimFeature);
-for x = 1:4
-    stimFeature.data{1,x} = stimFeature.data{1,x}(1:2775,:);
-    eeg.data{1,x} = eeg.data{1,x}(1:2775,:);
-end
-modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, 0, "rndimmeg", 155);
-savePred(stimFeature, eeg, modelAll, stimIdx, 0, "rndimmeg", 155);
+% For running rand model only
+% stimFeature = randomiseObservations(stimFeature, 4); 
+% minLen = 2775;
+% for x = 1:4
+%     stimFeature.data{1,x} = stimFeature.data{1,x}(1:minLen,:);
+%     eeg.data{1,x} = eeg.data{1,x}(1:minLen,:);
+% end
+modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, 0, "avgmeg", 155);
+savePred(stimFeature, eeg, modelAll, stimIdx, 0, "avgmeg", 155);
 
-%% 
-%  MCCA
+%% MCCA
+% For MCCA models.
 
 clear modelAll
 dirTRF = -1; % Backward TRF model
@@ -225,51 +180,17 @@ load(stimFilename,'stim');
 eegPreFilename = 'mcca/subData_meg_imavg.mat';
 disp('Loading preprocessed EEG data')
 
-comps = [128];
+comps = [8,16,32,64,128];
 for i = 1:size(comps,2)
     comp = comps(i);
     [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim, comp);
-%     stimFeature = randomiseObservations(stimFeature);
+%     stimFeature = randomiseObservations(stimFeature, 4);
     stimFeature.data = flip(stimFeature.data);
-    modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "rndimavg_meg", comp);
-    savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "rndimavg_meg", comp);
+    modelAll = saveModel(stimFeature, eeg, dirTRF, stimIdx, subIdx, "imavg_meg", comp);
+    savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, "imavg_meg", comp);
 end
 
-%% testing an avg thing
-
-stimIdx = 3;
-
-% Loading avg model
-avgModelFilename = ['avg_sub_results/avg_model_32_feature', num2str(stimIdx), '.mat'];
-disp(['Loading model data: ','avg_model_32_feature', num2str(stimIdx), '.mat']);
-avgModel = load(avgModelFilename,'modelAll').modelAll;
-
-curr = zeros(20,19);
-for sub = 1:19
-    clear stim stimFeature eeg
-    % Loading Stim data
-    stimFilename = 'dataStim_32.mat';
-    disp(['Loading stimulus data: ','dataStim_32.mat'])
-    load(stimFilename,'stim')
-    
-    % eeg
-    eegPreFilename = ['../datasets/LalorNatSpeech/dataCND/pre_dataSub',num2str(sub),'.mat'];
-    disp('Loading preprocessed EEG data')
-    [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-    [currVals, ~] = savePred(stimFeature, eeg, avgModel, stimIdx, sub, "");
-    curr(:,sub) = currVals;
-end
-
-rVals = zeros(20,1);
-for i=1:20
-    rVals(i,:) = mean(curr(i,:));
-end
-
-name =  "avg_rvals_32_feature" + stimIdx + ".mat";
-save(name,"rVals");
-
-%% 
-%  MCCA individual components
+%% MCCA individual components
 
 clear modelAll
 dirTRF = -1; % Backward TRF model
@@ -290,29 +211,7 @@ for comp = 1:16
     savePred(stimFeature, eeg, modelAll, stimIdx, subIdx, prefix);
 end
 
-%% testing thing
-
-    stimIdx = 3;
-    eegPreFilename = 'mcca/subData.mat';    
-    load(eegPreFilename,'eeg');
-    eeg = pickComponents(eeg, [1,3,5,7,8,9,10,15,16]);
-    size(eeg.data{1})
-    
-    %%
-    stimIdx = 3;
-    
-    % Loading Stim data
-    stimFilename = 'stim_input_files/dataStim_32.mat';
-    load(stimFilename,'stim')
-    
-    eegPreFilename = 'mcca/subData_pre_128.mat';
-    disp('Loading preprocessed EEG data')
-    
-    [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim);
-    stimFeature = randomiseObservations(stimFeature);
-
-%% 
-%  MCCA FOR EACH BAND
+%% MCCA FOR EACH BAND
 
 clear modelAll
 dirTRF = -1; % Backward TRF model
@@ -343,10 +242,10 @@ end
 
 %%
 
-function stimFeature = randomiseObservations(stimFeature)
+function stimFeature = randomiseObservations(stimFeature, numTrials)
     oldStimFeat = stimFeature;
-    r = randperm(4);
-    for i = 1:4
+    r = randperm(numTrials);
+    for i = 1:numTrials
         stimFeature.data{i} = oldStimFeat.data{r(i)};
     end
 end
@@ -370,8 +269,8 @@ function [stimFeature, eeg] = preprocessData(eegPreFilename, stimIdx, stim, comp
     load(eegPreFilename,'eeg'); 
 
     % only uncomment next line if you want to use a subset of MCCA comps.
-%     V = uint32(1):uint32(comps);
-%     eeg = pickComponents(eeg, V);
+    V = uint32(1):uint32(comps);
+    eeg = pickComponents(eeg, V);
 
     % Making sure that stim and neural data have the same length
     stimFeature = stim;
@@ -415,12 +314,12 @@ function modelAll = saveModel(stimFeature,eeg, dirTRF, stimIdx, subIdx, prefix, 
     
     % TRF - Compute model weights
     disp('Running mTRFcrossval')
-%     tmin = -200;
-%     tmax = 600;
-%     lambdas = [1e-6,1e-4,1e-2,1e0,1e2,1e4];
-    tmin = -100;
-    tmax = 400;
-    lambdas = [1e0,1e2,1e4]; 
+    tmin = -200;
+    tmax = 600;
+    lambdas = [1e-6,1e-4,1e-2,1e0,1e2,1e4];
+%     tmin = -100;
+%     tmax = 400;
+%     lambdas = [1e0,1e2,1e4]; 
 
     for obsIdx = 1:length(stimFeature.data)
         trainStim = stimFeature.data;

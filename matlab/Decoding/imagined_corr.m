@@ -1,13 +1,15 @@
 clear variables
 result_size = 100;
 squeezeTime = 1;
+predFile = 'results_meg/ld/combavg_megldsub0_pred_100_64_feature4.mat';
+
 overall_top = [];
 overall_bottom = [];
 overall_pred_top = [];
 overall_pred_bottom = [];
 
 for i = 1:2
-    [pred, stimData, onsets] = loadData(i);
+    [pred, stimData, onsets] = loadData(i, predFile);
 
     % (skipping final word for ease.)
     numWords = size(onsets,1) - 1;
@@ -43,6 +45,8 @@ sqn = sqrt(result_size);
 
 %imagData = load("imag_corrdata.mat",'stuff').stuff;
 
+% Run on imagined data, note values, then fill in here when running on
+% Listened data to get full bar chart.
 imagTop =  0.6581; %imagData(6,1); 
 imagBottom = 0.4163; %imagData(6,2); 
 imagSeTop = 0.0286;%imagData(6,3); 
@@ -140,14 +144,9 @@ function [topWords, bottomWords] = getXCorrelations(num_res, numWords, stimCorr2
     end
 end
 
-function [pred, stimData, onsets] = loadData(num)
+function [pred, stimData, onsets] = loadData(num, predFile)
     clear [bottomWords, topWords, bottomPred, topPred];
-    predFile = 'results_meg/ld/combavg_megldsub0_pred_100_64_feature4.mat';
-    theNum = 1;
-    if num == 2
-        theNum = 2;
-    end
-    pred = load(predFile,'predAll').predAll{1,theNum};
+    pred = load(predFile,'predAll').predAll{1,num};
     
     % Loading in stimulus data.
     stimData = load("stim_input_files/meg_audio_files100_4.mat", "stim").stim.data{4,num};
