@@ -145,3 +145,9 @@ python/200fs32Bands.mat
 python/200fsAllBands.mat
 python/32fsAllBands.mat
 python/audio_files2.mat
+meg/root_folder_list.py
+python/audio_files.mat
+python/imaginedimprovedmeg.csv
+python/imaginedmeg.csv
+python/listenedmeg.csv
+meg/Pre_process.py

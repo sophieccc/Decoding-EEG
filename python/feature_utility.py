@@ -49,8 +49,8 @@ def reduce_filter_num(info, num_filters, feature_idx, fs):
                 if top_filt > orig_filters:
                     top_filt = orig_filters
                 vals = sample_data[bottom_filt:top_filt+1]
-                total_freq = np.sum(vals)
-                new_mat[i, j] = total_freq / ((top_filt - bottom_filt) + 1)
+                avg_freq = np.sum(vals) / len(vals)
+                new_mat[i, j] = avg_freq
         obs_data = new_mat
         data[feature_idx, obs] = obs_data
 

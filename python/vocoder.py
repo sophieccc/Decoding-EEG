@@ -1,6 +1,7 @@
+import argparse
 import os
 import re
-import sys
+
 import numpy as np
 import pyworld as pw
 import scipy.io as sio
@@ -13,6 +14,23 @@ INPUT_FS = 44100
 
 # The fs of the values returned by WORLD is always 200.
 WORLD_FS = 200
+
+parser = argparse.ArgumentParser()
+parser.add_argument( "-m",
+                    "--mode",
+                    help="Create vocoder params (1) or Use vocoder params (2)?",
+                    type=int)
+parser.add_argument("-c",
+                    "--compressed",
+                    help="Compress feature data?",
+                    type=bool)
+parser.add_argument("-f",
+                    "--filepath",
+                    help="Filepath for audio file or matlab features")
+parser.add_argument("-n",
+                    "--num_audios",
+                    help="Number of trials to synthesise",
+                    type=int)
 
 
 def analyse_audio(filename, compressed_data):
@@ -71,11 +89,26 @@ def order_files(directory):
     return sorted_paths
 
 
+def get_files(directory):
+    files = os.listdir(directory)
+    file_nums = []
+    filepaths = []
+    for audio_file in files:
+        filepaths.append(os.path.join(directory, audio_file))
+        audio_file = audio_file.decode("utf-8")
+        file_nums.append(audio_file)
+    file_dict = {file_nums[i]: filepaths[i] for i in range(len(file_nums))}
+    sorted_dict = sorted(file_dict.items())
+    sorted_paths = [
+        pair[1].decode().rsplit('/', 1)[-1] for pair in sorted_dict
+    ]
+    return sorted_paths
+
+
 def analyse_all_audios(directory_path, compressed_data):
     directory = os.fsencode(directory_path)
     data = []
     num_files = len(os.listdir(directory))
-    num_files=2
     sorted_paths = order_files(directory)
 
     for index in range(0, num_files):
@@ -86,7 +119,9 @@ def analyse_all_audios(directory_path, compressed_data):
         features = format_features(f0, spectrogram, aperiodicity, vuv)
         data.append(features)
 
-    data_stim = sio.loadmat('../../CNSP-workshop2021_code/datasets/LalorNatSpeech/dataCND/dataStim.mat')
+    data_stim = sio.loadmat(
+        '../../CNSP-workshop2021_code/datasets/LalorNatSpeech/dataCND/dataStim.mat'
+    )
     stim_idx = data_stim['stim']['stimIdxs'][0][0].astype('double')
     cond_idx = data_stim['stim']['condIdxs'][0][0].astype('double')
     cond_names = data_stim['stim']['condNames'][0][0]
@@ -127,28 +162,50 @@ def synthesise_audio(mat, fs, compressed_data):
     return audio
 
 
-def synthesise_all_audios(filepath, compressed_data, fs):
-    prefix = "../../CNSP-workshop2021_code/CNSP_tutorial/stim_output_files/"
-    #prefix = "";
-    mat = sio.loadmat(prefix + filepath + '.mat')
+def synthesise_all_audios(filepath, compressed_data, num_audios, fs):
+    prefix = ""
+    #prefix = "../../CNSP-workshop2021_code/CNSP_tutorial/stim_output_files/meg/improvements/"
+    suffix = ""
+    #suffix = ".mat"
+
+    mat = sio.loadmat(prefix + filepath + suffix)
     data = mat['stim']['data'][0, 0]
 
-    for index in range(3, 4):
+    for index in range(0, num_audios):
         audio = synthesise_audio(data[:, index], fs, compressed_data)
-        sf.write('result_wavs/' + filepath + '_' + str(index) + '.wav', audio, fs)
+        sf.write('result_wavs/meg/' + filepath + '_' + str(index) + '.wav',
+                 audio, fs)
 
 
 def main():
+    path = 'audio_files'
     compressed_data = 0
-    path = 'megStim_indiv'
-    args = sys.argv[1:]
-    if len(args) > 0:
-        path = args[0]
-        if len(args) > 1:
-            compressed_data = int(args[1])
+    num_audios = 4
+    mode = 1
 
-    #analyse_all_audios(path, compressed_data)
-    synthesise_all_audios(path, compressed_data, INPUT_FS)
+    args = parser.parse_args()
+    if args.filepath:
+        path = args.filepath
+    if args.compressed:
+        compressed_data = 1
+    if args.num_audios:
+        num_audios = args.num_audios
+    if args.mode:
+        mode = args.mode
+
+    if mode == 1:
+        analyse_all_audios(path, compressed_data)
+    else:
+        synthesise_all_audios(path, compressed_data, num_audios, INPUT_FS)
+
+        # directory = os.fsencode("../../CNSP-workshop2021_code/CNSP_tutorial/stim_output_files/meg/")
+        # num_files = len(os.listdir(directory))
+        # sorted_paths = get_files(directory)
+
+        # for index in range(0, num_files):
+        #     print("Analyzing audio ", str(index))
+        #     file_path = sorted_paths[index]
+        #     synthesise_all_audios(file_path, compressed_data, INPUT_FS)
 
 
 if __name__ == '__main__':
