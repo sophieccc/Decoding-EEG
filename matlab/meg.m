@@ -1,12 +1,6 @@
-%%
-
-data_file = sprintf('MEG-PoeMusic-Imagery/MEGraw/R2820/R2820_sns.sqd');
-data = ft_read_data(data_file);
-data = data';
-
 %% Take MEG data and separate it into trials properly.
 
-modes = ["listening"]; % "imagery"];
+modes = ["imagery"];
 files = ["R2820", "R2818", "R2816", "R2697", "R2383"];
 channels = [183, 183, 183, 183, 173];
 
@@ -27,6 +21,9 @@ for m = 1:size(modes,2)
 
         data = data';
         save_file = strcat("dataSub", file, ".mat");
+        if mode == "imagery"
+            save_file = strcat("im", save_file);
+        end 
         save(save_file,'data');
     end
     
@@ -37,7 +34,7 @@ files = ["R2820", "R2818", "R2816", "R2697", "R2383"];
 load("datasets/LalorNatSpeech/dataCND/dataSub1",'eeg')
 old_eeg = eeg;
 for i = 1:size(files,2)
-    filename = strcat("dataSub", files(i), ".mat");
+    filename = strcat("imdataSub", files(i), ".mat");
     load(filename,'data')
     data = remove_channels(data);
     convert_to_eeg_form(data, old_eeg, files(i));
@@ -45,16 +42,17 @@ end
 
 %% Dealing with stimulus files (2 trials -> 20 trials). 
 
-load("CNSP_tutorial/stim_input_files/meg_audio_files.mat",'stim')
+load("Decoding/stim_input_files/meg_audio_files.mat",'stim')
+num_audios = 4;
 oldData = stim.data;
-newData = cell(6,20);
+newData = cell(6,num_audios);
 
-for i = 1:10
+for i = 1:(num_audios/2)
     for j = 1:6
         newData{j,i} = oldData{j,1};
     end
 end
-for i = 11:20
+for i = ((num_audios/2)+1):num_audios
     for j = 1:6
         newData{j,i} = oldData{j,2};
     end
@@ -63,7 +61,7 @@ end
 stim.data = newData;
 stim.fs = 200;
 
-save("CNSP_tutorial/stim_input_files/meg_audio_filesX.mat",'stim');
+save("Decoding/stim_input_files/meg_audio_filesX2.mat",'stim');
 %%
 function [data] = remove_channels(data)
     for i = 1:size(data,2)
@@ -82,7 +80,7 @@ function convert_to_eeg_form(data, old_eeg, file)
     eeg = rmfield(eeg,"deviceName");
     eeg = rmfield(eeg,"extChan");
     eeg = rmfield(eeg,"chanlocs");
-    filename = strcat("dataSub", file, ".mat");
+    filename = strcat("imdataSub", file, ".mat");
     save(filename,'eeg');
 end
 
@@ -111,7 +109,7 @@ function [resps] = split_data(data, times, order)
         first = times(order(i));
         second = size(data,1);
         if order(i) ~= size(times,1)
-            second = times(order(i)+1);
+            second = times(order(i)+1)-1;
         end
         curr_data = data(first:second,:);
         resps{i} = curr_data;
