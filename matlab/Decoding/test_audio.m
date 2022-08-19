@@ -1,3 +1,30 @@
+% Trying out various things with the reconstructed audio.
+
+%%
+[x,fs]=audioread('../../Decoding-EEG/python/result_wavs/meg/theStandard.mat_0.wav');
+[x1,fs1]=audioread('../../Decoding-EEG/python/result_wavs/meg/scale_mcca.mat_0.wav');
+
+% Getting f0 (feature 3) values for audio 1.
+% stimFile = 'stim_input_files/meg_audio_files.mat';
+% stim = load(stimFile,'stim').stim;
+% f0 = stim.data{3,1};
+% f0 = resample(f0, fs, 200);
+% 
+% zero_inds = find(~f0);
+% x(zero_inds) = 0;
+
+llen = min(length(x),length(x1));
+
+x = x(1:llen);
+x1 = x1(1:llen);
+
+env = abs(hilbert(x));
+%env = smooth(env,25000);
+
+x1 = 10*x1.*env;
+audiowrite('../../Decoding-EEG/python/result_wavs/meg/env_scale_mcca.mat_0.wav',x1,fs);
+
+%%
 [x,fs]=audioread('../../Decoding-EEG/python/result_wavs/theStandard_1.wav');
 
 [x1,fs1]=audioread('../../Decoding-EEG/python/result_wavs/scale_mcca32Stim_0.wav');

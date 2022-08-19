@@ -1,3 +1,5 @@
+% Redundant code, now done in python.
+
 function restoreOriginalFilters(filenames, numFils, featureIdx, fs, outputName)
 
     [~,c] = size(filenames);

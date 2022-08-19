@@ -1,3 +1,5 @@
+% Redundant, now done using python. 
+
 function reduceFilterNumber(filenames, numFilters, featureIdx, fs)
 
     [~,c] = size(filenames);

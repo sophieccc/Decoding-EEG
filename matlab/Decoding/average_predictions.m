@@ -1,9 +1,11 @@
-function average_predictions(stimIdx, stimDim)
+% Getting the average of the first 5 subjects predictions.
+
+function average_predictions(stimIdx, stimDim, numTrials)
 
     fileEnd = "_pred_32_feature" + stimIdx + ".mat";
     predFilenames = ["sub1" + fileEnd, "sub2" + fileEnd, "sub3" + fileEnd, "sub4" + fileEnd, "sub5" + fileEnd];
-    avgPred = cell(1,20);
-    for i = 1:20
+    avgPred = cell(1,numTrials);
+    for i = 1:numTrials
         vals = [];
         
         for curr = 1:size(predFilenames,2)
@@ -22,4 +24,3 @@ function average_predictions(stimIdx, stimDim)
     save(name, 'predAll');
     
     end
-    
